@@ -1,0 +1,158 @@
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f5f8fa;
+  color: #000; /* Color general a negro */
+  padding: 20px;
+}
+
+.fondo {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #d4f1f4, #75c9c8);
+}
+
+.container.glass {
+  max-width: 750px;
+  margin: 0 auto;
+  padding: 30px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  border-top: 6px solid #1d7a8c;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.3s ease-in-out;
+}
+
+.comentario-input {
+  color: black !important;
+  background-color: white !important;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 8px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.comentario-input::placeholder {
+  color: black !important;
+}
+
+
+.logo {
+  display: block;
+  margin: 0 auto 20px;
+  width: 120px;
+}
+
+h2{
+  text-align: center;
+  color: #000; /* Cambié el color del título a negro */
+  margin-bottom: 30px;
+}
+
+/* Preguntas */
+.pregunta {
+  margin-bottom: 25px;
+  padding: 15px 20px;
+  border-left: 4px solid #1d7a8c;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  font-size: 16px;
+  color: #000; /* Color de texto de las preguntas a negro */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease;
+}
+
+.pregunta:hover {
+  transform: scale(1.02);
+}
+
+.radio-group {
+  margin-top: 10px;
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.3);
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: background-color 0.3s;
+  color: #000; /* Color de texto de las opciones de radio a negro */
+}
+
+.radio-option:hover {
+  background-color: rgba(255, 255, 255, 0.6);
+}
+
+.radio-option input[type="radio"] {
+  margin-right: 8px;
+  accent-color: #2d9c89;
+}
+
+/* Botón */
+button {
+  margin-top: 40px;
+  background: linear-gradient(135deg, #2d9c89, #1d7a8c);
+  color: white;
+  border: none;
+  padding: 14px 22px;
+  font-size: 18px;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  width: 100%;
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, background 0.4s ease;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #1d7a8c, #2d9c89);
+}
+
+button:active {
+  transform: scale(0.98);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.field-group {
+  margin: 10px 0;
+}
+
+/* Aplica estilos a select igual que a input */
+select.input {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  border: none;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 16px;
+  transition: background 0.3s ease, transform 0.3s ease;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+select.input:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.02);
+}
+
+option {
+  color: black;
+}
+

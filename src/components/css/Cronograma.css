@@ -1,0 +1,147 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+}
+
+body {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #2a9d8f, #264653, #e9c46a);
+  background-size: 400% 400%;
+  animation: gradient 15s ease infinite;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  overflow-x: auto;
+}
+
+@keyframes gradient {
+  0% {background-position: 0% 50%;}
+  50% {background-position: 100% 50%;}
+  100% {background-position: 0% 50%;}
+}
+
+.container {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 40px;
+  width: 100%;
+  max-width: 700px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease-in-out;
+}
+
+.container:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.logo {
+  display: block;
+  margin: 0 auto 30px auto;
+  width: 120px;
+  max-width: 100%;
+}
+
+h2, h3 {
+  text-align: center;
+  color: rgba(235, 232, 232, 0.964);
+  margin-bottom: 20px;
+}
+
+form table {
+  width: 100%;
+  margin-bottom: 20px;
+  border-collapse: collapse;
+}
+
+form table th, form table td {
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  vertical-align: middle;
+}
+
+input[type="text"], input[type="number"], input[type="email"] {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 14px;
+  transition: background 0.3s ease, transform 0.3s ease;
+}
+
+input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+input:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.02);
+}
+
+input[type="checkbox"], input[type="radio"] {
+  transform: scale(1.2);
+  margin-right: 6px;
+}
+
+label {
+  color: white;
+  margin-right: 10px;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  background: #2a9d8f;
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.3s ease;
+  margin-top: 20px;
+}
+
+button:hover {
+  background: #21867a;
+  transform: scale(1.05);
+}
+
+.boton-celda {
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  color: white;
+  background-color: rgba(255, 255, 255, 0.2);
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 14px;
+}
+
+.boton-celda:hover {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+s
+.boton-celda.inactivo {
+  background-color: rgba(255, 255, 255, 0.05);
+  cursor: default;
+  pointer-events: none;
+  color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
