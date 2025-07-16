@@ -19,6 +19,9 @@ import EvaluacionTratamiento from "./components/EvaluacionTratamiento";
 import RegistroPaciente from "./components/RegistroPacientes";
 import VistaPacientes from "./components/Index";
 import SignosVitalesGraph from "./components/Graficas";
+import MedicamentosConcomitantes from "./components/Formularios/MedicamentosConcomitantes";
+import EventosAdversos from "./components/Formularios/MedicamentosAdvesos";
+
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <BrowserRouter>
@@ -40,10 +43,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <Route path="/RegistroPacientes" element={<RegistroPaciente />} />
     <Route path="/Index" element={<VistaPacientes />} />
     <Route path="/Graficas" element={<SignosVitalesGraph />} />
-
+    <Route path="/MedicamentosConcomitantes/:idPaciente" element={<MedicamentosConcomitantes />} />
+    <Route path="/EventosAdversos/:idPaciente" element={<EventosAdversos />} />
     </Routes>
-
-
-    
   </BrowserRouter>
 )

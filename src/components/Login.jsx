@@ -7,19 +7,33 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!email.endsWith('@infinite.com.mx')) {
-      alert('El correo no tiene acceso');
-      return;
-    }
+    try {
+      const response = await fetch('http://localhost:5000/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-    // Verificar las credenciales
-    if (email === 'admin@infinite.com.mx' && password === 'Admin123') {
-      navigate('/Index');
-    } else {
-      navigate('/PreguntaInicio');
+      const data = await response.json();
+
+      if (response.ok) {
+        // Login exitoso o redirección válida
+        navigate(data.redirect);
+      } else {
+        // Muestra mensaje de error (403, 401, 400, etc.)
+        alert(data.message);
+        if (data.redirect) {
+          navigate(data.redirect);
+        }
+      }
+    } catch (error) {
+      console.error('Error al iniciar sesión:', error);
+      alert('Error de conexión con el servidor');
     }
   };
 

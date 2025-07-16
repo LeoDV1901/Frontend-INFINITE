@@ -1,30 +1,17 @@
-import React from "react";
-import { useNavigate } from 'react-router-dom';  
-import { useParams } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
+// Lista de procedimientos y visitas
 const procedimientos = [
   "Firma de consentimiento Informado",
-  "Criterios de Inclusión/ Exclusión",
+  "Criterios de Inclusión/ Exclusión",  
   "Historia Clínica",
-  "Signos Vitales",
-  "Glicemia capilar",
+  "Signos Vitales",  
   "Medicamentos Concomitantes",
   "Eventos Adversos",
-  
 ];
 
 const visitas = ["Visita 0", "Visita 1", "Visita 2", "Visita 3"];
-
-const datos = [
-  [1, 0, 0, 0],
-  [1, 0, 0, 0],
-  [1, 0, 0, 0],
-  [1, 1, 1, 0],
-  [1, 0, 0, 0],
-  [1, 0, 0, 0],
-  [1, 1, 1, 0],
-  
-];
 
 const links = {
   "Firma de consentimiento Informado": {
@@ -41,16 +28,68 @@ const links = {
     "Visita 1": "/signos-vitales/v1",
     "Visita 2": "/signos-vitales/v2",
   },
+  "Medicamentos Concomitantes": {
+    "Visita 0": "/MedicamentosConcomitantes",
+  },
+  "Eventos Adversos": {
+    "Visita 0": "/eventosAdversos",
+  },
 };
 
 
 const TablaProcedimientos = () => {
-  const { idPaciente } = useParams();  // 👈 obtén el idPaciente de la URL
+  const { idPaciente } = useParams();  
   const navigate = useNavigate();
+  
+  const [botonColors, setBotonColors] = useState({
+    FirmaConsentimiento: 'green', 
+    SignosVitales: 'green',
+    CriteriosInclusion: 'green'
+  });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const responseConsentimiento = await fetch(`http://127.0.0.1:5000/form/verifyconsentimiento/${idPaciente}`);
+        const dataConsentimiento = await responseConsentimiento.json();
+        setBotonColors(prev => ({
+          ...prev,
+          FirmaConsentimiento: dataConsentimiento.respuesta_correcta ? 'green' : 'red'
+        }));
+
+        const responseSignos = await fetch(`http://localhost:5000/form/verifysignos_vitales/${idPaciente}`);
+        const dataSignos = await responseSignos.json();
+        const isDataOutOfRange = dataSignos.some((signo) => 
+          Object.keys(signo).some((key) => key.includes('_fuera_de_rango') && signo[key])
+        );
+        setBotonColors(prev => ({
+          ...prev,
+          SignosVitales: isDataOutOfRange ? 'red' : 'green'
+        }));
+
+        const responseCriterios = await fetch(`http://127.0.0.1:5000/form/verifycriterios_inclusion/${idPaciente}`);
+        const dataCriterios = await responseCriterios.json();
+        setBotonColors(prev => ({
+          ...prev,
+          CriteriosInclusion: dataCriterios.respuesta_correcta ? 'green' : 'red'
+        }));
+        
+      } catch (error) {
+        console.error("Error al obtener los datos:", error);
+        setBotonColors(prev => ({
+          FirmaConsentimiento: 'red',
+          SignosVitales: 'red',
+          CriteriosInclusion: 'red'
+        }));
+      }
+    };
+
+    fetchData();
+  }, [idPaciente]);
 
   const handleClick = (link) => {
     if (link !== "#") {
-      navigate(`${link}/${idPaciente}`);  // 👈 redirige pasando el idPaciente
+      navigate(`${link}/${idPaciente}`);  
     } else {
       alert("No hay ruta disponible para esta combinación de procedimiento y visita.");
     }
@@ -64,10 +103,7 @@ const TablaProcedimientos = () => {
           <tr>
             <th>Procedimiento</th>
             {visitas.map((v, i) => (
-              <th key={i}>
-                {v}
-                <br />
-              </th>
+              <th key={i}>{v}</th>
             ))}
           </tr>
         </thead>
@@ -76,18 +112,44 @@ const TablaProcedimientos = () => {
             <tr key={i}>
               <td>{proc}</td>
               {visitas.map((visita, j) => {
-                const isActive = datos[i][j];
-                const link = links[proc]?.[visita] || "#";  // Usamos el enlace o "#"
+                const link = links[proc]?.[visita] || "#";  // Verificamos si existe un link
+                const isFirmaConsentimiento = proc === "Firma de consentimiento Informado";
+                const isSignosVitales = proc === "Signos Vitales";
+                const isCriteriosInclusion = proc === "Criterios de Inclusión/ Exclusión";
 
                 return (
                   <td key={j} style={{ textAlign: "center" }}>
-                    <button
-                      className={`boton-celda ${isActive ? "" : "inactivo"}`}
-                      disabled={!isActive || link === "#"}
-                      onClick={() => handleClick(link)} // Llamamos a la función de clic
-                    >
-                      {isActive ? "X" : ""}
-                    </button>
+                    {link !== "#" ? (
+                      <button
+                        className="boton-celda"
+                        style={{
+                          backgroundColor: 
+                            isFirmaConsentimiento ? botonColors.FirmaConsentimiento : 
+                            (isSignosVitales ? botonColors.SignosVitales :
+                              (isCriteriosInclusion ? botonColors.CriteriosInclusion : "initial")),
+                          padding: '5px 10px',
+                          borderRadius: '4px',
+                          cursor: 'pointer'
+                        }}
+                        disabled={false}
+                        onClick={() => handleClick(link)} 
+                      >
+                        <span role="img" aria-label="Formulario">📝</span> {/* Ícono de formulario */}
+                      </button>
+                    ) : (
+                      <button
+                        className="boton-celda"
+                        style={{
+                          backgroundColor: "initial",
+                          border: "1px solid #ccc",
+                          width: "30px",
+                          height: "30px",
+                        }}
+                        disabled={true}
+                      >
+                        {/* Recuadro vacío */}
+                      </button>
+                    )}
                   </td>
                 );
               })}

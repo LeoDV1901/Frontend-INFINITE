@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './css/Formulario_Pacientes.css';
+import Swal from 'sweetalert2';
 
 const FormularioPaciente = () => {
   const [formData, setFormData] = useState({
@@ -13,11 +14,12 @@ const FormularioPaciente = () => {
   const [mensaje, setMensaje] = useState('');
   const [mensajeTipo, setMensajeTipo] = useState(''); // 'exito' o 'error'
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
+const handleChange = (e) => {
+  const { name, value } = e.target;
+  setFormData({ ...formData, [name]: value });
+};
 
+// Manejo del envío del formulario
 const handleSubmit = async (e) => {
   e.preventDefault();
   try {
@@ -33,8 +35,13 @@ const handleSubmit = async (e) => {
 
     const data = await response.json();
     if (response.ok) {
-      setMensaje('✅ El paciente ha sido registrado exitosamente en el sistema.');
-      setMensajeTipo('exito');
+      Swal.fire({
+        icon: 'success',
+        title: '¡Paciente registrado exitosamente!',
+        text: 'El paciente ha sido registrado en el sistema.',
+        showConfirmButton: false,
+        timer: 2000,
+      });
       console.log('Éxito:', data);
       setFormData({
         idPaciente: '',
@@ -45,12 +52,18 @@ const handleSubmit = async (e) => {
       });
     } else {
       console.error('Error al registrar paciente:', data);
-      setMensaje('❌ No se pudo registrar el paciente. Verifique los datos e intente nuevamente.');
-      setMensajeTipo('error');
+      Swal.fire({
+        icon: 'error',
+        title: '¡Error al registrar paciente!',
+        text: 'No se pudo registrar el paciente. Verifique los datos e intente nuevamente.',
+      });
     }
   } catch (error) {
-    setMensaje('❌ Error de conexión con el servidor. Por favor, intente más tarde.');
-    setMensajeTipo('error');
+    Swal.fire({
+      icon: 'error',
+      title: '¡Error de conexión!',
+      text: 'Hubo un problema al conectar con el servidor. Por favor, intente más tarde.',
+    });
     console.error('Error de red:', error);
   }
 };

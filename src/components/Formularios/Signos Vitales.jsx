@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import '../css/SignosV.css';
 import { useParams } from 'react-router-dom';
+import Swal from 'sweetalert2';
+
 
 const FormularioMedico = () => {
-  const { idPaciente } = useParams(); // Obtenemos el ID desde la URL
+  const { idPaciente } = useParams(); 
 
-  // Estados del formulario
+  
   const [aleatorizacion, setAleatorizacion] = useState('');
   const [dia, setDia] = useState('');
   const [mes, setMes] = useState('');
@@ -22,11 +24,11 @@ const FormularioMedico = () => {
   const [imc, setImc] = useState('');
   const [comentario, setComentario] = useState('');
 
-  // Estados para CRUD
-  const [editId, setEditId] = useState(null); // ID del registro si ya existe
+  
+  const [editId, setEditId] = useState(null); 
   const [registroExistente, setRegistroExistente] = useState(false);
 
-  // Validación de los valores de los inputs
+  
   const isOutOfRange = (value, min, max) => {
     if (value === '') return false;
     const num = parseFloat(value);
@@ -39,35 +41,36 @@ const FormularioMedico = () => {
     borderRadius: '4px',
   });
 
-  // Manejo del cambio en la opción de embarazo
+  
   const handleEmbarazoChange = (event) => {
     setEmbarazo(event.target.value);
   };
 
-  // useEffect para cargar datos existentes
+  
   useEffect(() => {
     if (idPaciente) {
       fetchSignos();
+      
     }
   }, [idPaciente]);
 
-  // useEffect para calcular IMC automáticamente cuando cambien el peso o la talla
-  useEffect(() => {
+  
+useEffect(() => {
     if (peso && talla) {
-      const tallaEnMetros = parseFloat(talla) / 100; // Convertir talla de cm a metros
-      const imcCalculado = parseFloat(peso) / (tallaEnMetros * tallaEnMetros);
-      setImc(imcCalculado.toFixed(2)); // Establecemos el IMC con 2 decimales
+      const tallaEnMetros = parseFloat(talla); 
+      const imcCalculado = (tallaEnMetros * tallaEnMetros) / parseFloat(peso); 
+      setImc(imcCalculado.toFixed(2)); 
     }
-  }, [peso, talla]); // Ejecutar cuando cambien peso o talla
+  }, [peso, talla]); 
 
   const fetchSignos = async () => {
     try {
       const response = await fetch(`http://localhost:5000/form/signos/paciente/${idPaciente}`);
       const data = await response.json();
       if (data && data.length > 0) {
-        const ultimo = data[data.length - 1]; // último registro
+        const ultimo = data[data.length - 1]; 
 
-        // Rellenamos el formulario
+        
         setEditId(ultimo.id);
         setRegistroExistente(true);
         setAleatorizacion(ultimo.aleatorizacion || '');
@@ -93,79 +96,105 @@ const FormularioMedico = () => {
     }
   };
 
-  // Manejo del envío del formulario
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    const fecha = `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+  const fecha = `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
 
-    const data = {
-      idPaciente,
-      aleatorizacion,
-      fecha,
-      genero,
-      presion_sistolica: presionSistolica,
-      presion_diastolica: presionDiastolica,
-      temperatura,
-      frecuencia_cardiaca: frecuenciaCardiaca,
-      frecuencia_respiratoria: frecuenciaRespiratoria,
-      peso,
-      talla,
-      imc,
-      embarazo,
-      comentario,
-    };
-
-    const url = registroExistente
-      ? `http://localhost:5000/form/signos/${editId}`
-      : 'http://localhost:5000/form/signos';
-
-    const method = registroExistente ? 'PUT' : 'POST';
-
-    try {
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (response.ok) {
-        const resultado = await response.json();
-        alert(registroExistente ? 'Registro actualizado' : 'Datos guardados con éxito');
-        fetchSignos(); // recargar
-      } else {
-        const error = await response.json();
-        alert('Error al guardar: ' + error.mensaje);
-      }
-    } catch (err) {
-      console.error('ERROR de conexión:', err);
-      alert('Error de red o del servidor');
-    }
+  const data = {
+    idPaciente,
+    aleatorizacion,
+    fecha,
+    genero,
+    presion_sistolica: presionSistolica,
+    presion_diastolica: presionDiastolica,
+    temperatura,
+    frecuencia_cardiaca: frecuenciaCardiaca,
+    frecuencia_respiratoria: frecuenciaRespiratoria,
+    peso,
+    talla,
+    imc,
+    embarazo,
+    comentario,
   };
 
-  // Función para eliminar registro
-  const handleDelete = async () => {
-    if (!editId || !window.confirm('¿Deseas eliminar este registro?')) return;
+  const url = registroExistente
+    ? `http://localhost:5000/form/signos/${editId}`
+    : 'http://localhost:5000/form/signos';
 
-    try {
-      const response = await fetch(`http://localhost:5000/form/signos/${editId}`, {
-        method: 'DELETE',
+  const method = registroExistente ? 'PUT' : 'POST';
+
+  try {
+    const response = await fetch(url, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (response.ok) {
+      const resultado = await response.json();
+      Swal.fire({
+        icon: 'success',
+        title: registroExistente ? 'Registro actualizado' : 'Datos guardados con éxito',
+        showConfirmButton: false,
+        timer: 1500
       });
-
-      if (response.ok) {
-        alert('Registro eliminado correctamente');
-        resetForm();
-      } else {
-        const error = await response.json();
-        alert('Error al eliminar: ' + error.mensaje);
-      }
-    } catch (err) {
-      console.error('Error al eliminar', err);
-      alert('Error al eliminar');
+      fetchSignos(); // recargar
+    } else {
+      const error = await response.json();
+      Swal.fire({
+        icon: 'error',
+        title: 'Error al guardar',
+        text: error.mensaje || 'Ocurrió un error inesperado',
+      });
     }
-  };
+  } catch (err) {
+    console.error('ERROR de conexión:', err);
+    Swal.fire({
+      icon: 'error',
+      title: 'Error de red o del servidor',
+      text: 'Por favor intenta nuevamente más tarde',
+    });
+  }
+};
+
+const handleDelete = async () => {
+  if (!editId || !window.confirm('¿Deseas eliminar este registro?')) return;
+
+  try {
+    const response = await fetch(`http://localhost:5000/form/signos/${editId}`, {
+      method: 'DELETE',
+    });
+
+    if (response.ok) {
+      Swal.fire({
+        icon: 'success',
+        title: 'Registro eliminado correctamente',
+        showConfirmButton: false,
+        timer: 1500
+      });
+      resetForm();
+    } else {
+      const error = await response.json();
+      Swal.fire({
+        icon: 'error',
+        title: 'Error al eliminar',
+        text: error.mensaje || 'Ocurrió un error inesperado',
+      });
+    }
+  } catch (err) {
+    console.error('Error al eliminar', err);
+    Swal.fire({
+      icon: 'error',
+      title: 'Error al eliminar',
+      text: 'Por favor intenta nuevamente más tarde',
+    });
+  }
+};
+
 
   // Función para resetear el formulario
   const resetForm = () => {
@@ -275,7 +304,7 @@ const FormularioMedico = () => {
                   placeholder="mmHg"
                   value={presionSistolica}
                   onChange={(e) => setPresionSistolica(e.target.value)}
-                  style={inputStyle(presionSistolica, 50, 250)}
+                  style={inputStyle(presionSistolica, 90, 120)}
                 />
               </td>
               <td>Presión Diastólica</td>
@@ -285,7 +314,7 @@ const FormularioMedico = () => {
                   placeholder="mmHg"
                   value={presionDiastolica}
                   onChange={(e) => setPresionDiastolica(e.target.value)}
-                  style={inputStyle(presionDiastolica, 30, 150)}
+                  style={inputStyle(presionDiastolica, 60, 80)}
                 />
               </td>
             </tr>
@@ -394,7 +423,7 @@ const FormularioMedico = () => {
         </table>
 
         <div>
-          <button type="submit">Guardar</button>
+          
           {registroExistente && (
             <>
               <button type="button" onClick={handleSubmit} style={{ marginLeft: '10px' }}>
