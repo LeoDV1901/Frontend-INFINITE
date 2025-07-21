@@ -4,9 +4,9 @@ import { useNavigate, useParams } from "react-router-dom";
 // Lista de procedimientos y visitas
 const procedimientos = [
   "Firma de consentimiento Informado",
-  "Criterios de Inclusión/ Exclusión",  
+  "Criterios de Inclusión/ Exclusión",
   "Historia Clínica",
-  "Signos Vitales",  
+  "Signos Vitales",
   "Medicamentos Concomitantes",
   "Eventos Adversos",
 ];
@@ -36,18 +36,21 @@ const links = {
   },
 };
 
-
 const TablaProcedimientos = () => {
-  const { idPaciente } = useParams();  
+  const { idPaciente } = useParams();
   const navigate = useNavigate();
-  
+
   const [botonColors, setBotonColors] = useState({
-    FirmaConsentimiento: 'green', 
+    FirmaConsentimiento: 'green',
     SignosVitales: 'green',
-    CriteriosInclusion: 'green'
+    CriteriosInclusion: 'green',
+    MedicamentosConcomitantes: 'red',
+    EventosAdversos: 'red',
   });
 
   useEffect(() => {
+    if (!idPaciente) return;
+
     const fetchData = async () => {
       try {
         const responseConsentimiento = await fetch(`http://127.0.0.1:5000/form/verifyconsentimiento/${idPaciente}`);
@@ -59,7 +62,7 @@ const TablaProcedimientos = () => {
 
         const responseSignos = await fetch(`http://localhost:5000/form/verifysignos_vitales/${idPaciente}`);
         const dataSignos = await responseSignos.json();
-        const isDataOutOfRange = dataSignos.some((signo) => 
+        const isDataOutOfRange = dataSignos.some((signo) =>
           Object.keys(signo).some((key) => key.includes('_fuera_de_rango') && signo[key])
         );
         setBotonColors(prev => ({
@@ -73,14 +76,32 @@ const TablaProcedimientos = () => {
           ...prev,
           CriteriosInclusion: dataCriterios.respuesta_correcta ? 'green' : 'red'
         }));
-        
+
+        const responseMedicamentos = await fetch(`http://127.0.0.1:5000/form/medicamentos_concomitantesV/${idPaciente}`);
+        const dataMedicamentos = await responseMedicamentos.json();
+        console.log("Medicamentos:", dataMedicamentos);
+        setBotonColors(prev => ({
+          ...prev,
+          MedicamentosConcomitantes: dataMedicamentos.respuestas_completas ? 'green' : 'red'
+        }));
+
+        const responseEventos = await fetch(`http://127.0.0.1:5000/form/eventos_adversosV/${idPaciente}`);
+        const dataEventos = await responseEventos.json();
+        console.log("Eventos:", dataEventos);
+        setBotonColors(prev => ({
+          ...prev,
+          EventosAdversos: dataEventos.respuestas_completas ? 'green' : 'red'
+        }));
+
       } catch (error) {
         console.error("Error al obtener los datos:", error);
-        setBotonColors(prev => ({
+        setBotonColors({
           FirmaConsentimiento: 'red',
           SignosVitales: 'red',
-          CriteriosInclusion: 'red'
-        }));
+          CriteriosInclusion: 'red',
+          MedicamentosConcomitantes: 'red',
+          EventosAdversos: 'red',
+        });
       }
     };
 
@@ -89,7 +110,7 @@ const TablaProcedimientos = () => {
 
   const handleClick = (link) => {
     if (link !== "#") {
-      navigate(`${link}/${idPaciente}`);  
+      navigate(`${link}/${idPaciente}`);
     } else {
       alert("No hay ruta disponible para esta combinación de procedimiento y visita.");
     }
@@ -112,10 +133,21 @@ const TablaProcedimientos = () => {
             <tr key={i}>
               <td>{proc}</td>
               {visitas.map((visita, j) => {
-                const link = links[proc]?.[visita] || "#";  // Verificamos si existe un link
+                const link = links[proc]?.[visita] || "#";
+
                 const isFirmaConsentimiento = proc === "Firma de consentimiento Informado";
                 const isSignosVitales = proc === "Signos Vitales";
                 const isCriteriosInclusion = proc === "Criterios de Inclusión/ Exclusión";
+                const isMedicamentosConcomitantes = proc === "Medicamentos Concomitantes";
+                const isEventosAdversos = proc === "Eventos Adversos";
+
+                const backgroundColor =
+                  isFirmaConsentimiento ? botonColors.FirmaConsentimiento :
+                  isSignosVitales ? botonColors.SignosVitales :
+                  isCriteriosInclusion ? botonColors.CriteriosInclusion :
+                  isMedicamentosConcomitantes ? botonColors.MedicamentosConcomitantes :
+                  isEventosAdversos ? botonColors.EventosAdversos :
+                  "initial";
 
                 return (
                   <td key={j} style={{ textAlign: "center" }}>
@@ -123,18 +155,14 @@ const TablaProcedimientos = () => {
                       <button
                         className="boton-celda"
                         style={{
-                          backgroundColor: 
-                            isFirmaConsentimiento ? botonColors.FirmaConsentimiento : 
-                            (isSignosVitales ? botonColors.SignosVitales :
-                              (isCriteriosInclusion ? botonColors.CriteriosInclusion : "initial")),
+                          backgroundColor,
                           padding: '5px 10px',
                           borderRadius: '4px',
                           cursor: 'pointer'
                         }}
-                        disabled={false}
-                        onClick={() => handleClick(link)} 
+                        onClick={() => handleClick(link)}
                       >
-                        <span role="img" aria-label="Formulario">📝</span> {/* Ícono de formulario */}
+                        <span role="img" aria-label="Formulario">📝</span>
                       </button>
                     ) : (
                       <button
@@ -146,9 +174,7 @@ const TablaProcedimientos = () => {
                           height: "30px",
                         }}
                         disabled={true}
-                      >
-                        {/* Recuadro vacío */}
-                      </button>
+                      />
                     )}
                   </td>
                 );
