@@ -14,7 +14,7 @@ const MedicamentosConcomitantes = () => {
   const [nombreGenerico, setNombreGenerico] = useState('');
   const [dosisDiaria, setDosisDiaria] = useState('');
   const [presentacion, setPresentacion] = useState('');
-  const [indicacionTerapeutica, setIndicacionTerapeutica] = useState('');
+  const [indicacion, setIndicacion] = useState('');  // Cambio aquí de 'indicacionTerapeutica' a 'indicacion'
   const [fechaInicio, setFechaInicio] = useState('');
   const [fechaTermino, setFechaTermino] = useState('');
   const [continuaMedicamento, setContinuaMedicamento] = useState(null);
@@ -37,7 +37,27 @@ const MedicamentosConcomitantes = () => {
 
     if (!idPaciente) return;
 
-    fetch(`http://localhost:5000/form/medicamentos_concomitantes/${idPaciente}`)
+    // Llamada a la API para obtener los datos del paciente
+    const fetchPaciente = async () => {
+      try {
+        const res = await fetch(`https://api.weareinfinite.mx/paciente/view/${idPaciente}`);
+        if (!res.ok) {
+          throw new Error('No se pudo obtener los datos del paciente');
+        }
+        const pacienteData = await res.json();
+        setIniciales(pacienteData.iniciales || '');
+      } catch (error) {
+        console.error('Error cargando datos del paciente:', error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'No se pudieron cargar los datos del paciente.',
+        });
+      }
+    };
+
+    // Llamada a la API para obtener los datos del formulario de medicamentos concomitantes
+    fetch(`https://api.weareinfinite.mx/form/medicamentos_concomitantes/${idPaciente}`)
       .then(res => {
         if (res.status === 404) {
           setRegistroExistente(false);
@@ -48,13 +68,12 @@ const MedicamentosConcomitantes = () => {
       .then(data => {
         if (data) {
           setRegistroExistente(true);
-          setIniciales(data.iniciales || '');
           setNumeroAleatorizacion(data.num_aleatorizacion || '');
           setConsumioMedicamento(data.consumio_medicamento?.toUpperCase() === 'S');
           setNombreGenerico(data.nombre_medicamento || '');
           setDosisDiaria(data.dosis_diaria || '');
           setPresentacion(data.presentacion || '');
-          setIndicacionTerapeutica(data.indicacion || '');
+          setIndicacion(data.indicacion || '');  // Cambio aquí para establecer el valor de 'indicacion'
           setFechaInicio(formatDateForInput(data.fecha_inicio));
           setFechaTermino(formatDateForInput(data.fecha_termino));
           setContinuaMedicamento(data.continua_consumo?.toUpperCase() === 'S');
@@ -68,6 +87,8 @@ const MedicamentosConcomitantes = () => {
           text: 'No se pudieron cargar los datos.',
         });
       });
+
+    fetchPaciente(); // Llamada para obtener las iniciales del paciente
   }, [idPaciente]);
 
   const handleSubmit = async (e) => {
@@ -81,14 +102,14 @@ const MedicamentosConcomitantes = () => {
       nombre_medicamento: nombreGenerico,
       dosis_diaria: dosisDiaria,
       presentacion,
-      indicacion: indicacionTerapeutica,
+      indicacion,  // Cambio aquí para usar 'indicacion' en lugar de 'indicacionTerapeutica'
       fecha_inicio: fechaInicio,
       fecha_termino: fechaTermino,
       continua_consumo: continuaMedicamento ? 'S' : 'N'
     };
 
     try {
-      const response = await fetch(`http://localhost:5000/form/medicamentos_concomitantes${registroExistente ? `/${idPaciente}` : ''}`, {
+      const response = await fetch(`https://api.weareinfinite.mx/form/medicamentos_concomitantes${registroExistente ? `/${idPaciente}` : ''}`, {
         method: registroExistente ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -215,8 +236,8 @@ const MedicamentosConcomitantes = () => {
                   <td><input type="text" value={presentacion} disabled={bloqueado} onChange={(e) => setPresentacion(e.target.value)} /></td>
                 </tr>
                 <tr>
-                  <td><label>Indicación terapéutica:</label></td>
-                  <td><input type="text" value={indicacionTerapeutica} disabled={bloqueado} onChange={(e) => setIndicacionTerapeutica(e.target.value)} /></td>
+                  <td><label>Indicación:</label></td>  {/* Cambié aquí */}
+                  <td><input type="text" value={indicacion} disabled={bloqueado} onChange={(e) => setIndicacion(e.target.value)} /></td>
                 </tr>
                 <tr>
                   <td><label>Fecha de inicio:</label></td>

@@ -22,7 +22,10 @@ import SignosVitalesGraph from "./components/Graficas";
 import MedicamentosConcomitantes from "./components/Formularios/MedicamentosConcomitantes";
 import EventosAdversos from "./components/Formularios/MedicamentosAdvesos";
 import SplashScreen from "./components/Presentacion";
-
+import UploadForm from "./components/Archivos";
+import Protocolo from "./components/Protocolo";
+import ReportePaciente from "./components/Reporte";
+import CrearAdministrador from "./components/CrearAdministrador";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <BrowserRouter>
@@ -47,6 +50,11 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <Route path="/MedicamentosConcomitantes/:idPaciente" element={<MedicamentosConcomitantes />} />
     <Route path="/EventosAdversos/:idPaciente" element={<EventosAdversos />} />
     <Route path="/" element={<SplashScreen />} />
+    <Route path="/Archivos/:idPaciente" element={<UploadForm />} />
+    <Route path="/Protocolo" element={<Protocolo />} />
+    <Route path="/ReportePaciente/:idPaciente" element={<ReportePaciente />} />
+    <Route path="/CreateAdmin" element={<CrearAdministrador />} />
+
     </Routes>
   </BrowserRouter>
 )

@@ -6,7 +6,6 @@ import Swal from 'sweetalert2';
 const EventosAdversos = () => {
   const { idPaciente } = useParams();
   const [registroExistente, setRegistroExistente] = useState(false);
-
   const [formData, setFormData] = useState({
     iniciales: '',
     num_aleatorizacion: '',
@@ -25,7 +24,6 @@ const EventosAdversos = () => {
     nota_evolucion: ''
   });
 
-  // Función para convertir fechas al formato YYYY-MM-DD para inputs tipo date
   const formatDateForInput = (dateStr) => {
     if (!dateStr) return '';
     const date = new Date(dateStr);
@@ -41,7 +39,7 @@ const EventosAdversos = () => {
 
     const fetchData = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/form/eventos_adversos/${idPaciente}`);
+        const res = await fetch(`https://api.weareinfinite.mx/form/eventos_adversos/${idPaciente}`);
         if (res.status === 404) {
           setRegistroExistente(false);
           return;
@@ -80,7 +78,25 @@ const EventosAdversos = () => {
       }
     };
 
-    fetchData();
+    // Obtención de las iniciales del paciente
+    const fetchPaciente = async () => {
+      try {
+        const resPaciente = await fetch(`https://api.weareinfinite.mx/paciente/view/${idPaciente}`);
+        if (resPaciente.status === 404) {
+          console.error('Paciente no encontrado');
+          return;
+        }
+        const pacienteData = await resPaciente.json();
+        if (pacienteData && pacienteData.iniciales) {
+          setFormData(prev => ({ ...prev, iniciales: pacienteData.iniciales }));
+        }
+      } catch (error) {
+        console.error('Error cargando datos del paciente:', error);
+      }
+    };
+
+    fetchPaciente();  // Cargar datos del paciente
+    fetchData();      // Cargar datos del evento adverso
   }, [idPaciente]);
 
   const handleInputChange = (e) => {
@@ -105,7 +121,7 @@ const EventosAdversos = () => {
     };
 
     try {
-      const response = await fetch(`http://localhost:5000/form/eventos_adversos${registroExistente ? `/${idPaciente}` : ''}`, {
+      const response = await fetch(`https://api.weareinfinite.mx/form/eventos_adversos${registroExistente ? `/${idPaciente}` : ''}`, {
         method: registroExistente ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

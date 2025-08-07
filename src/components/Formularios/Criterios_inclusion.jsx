@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom'; // Importamos useParams y useNavigate
+import { useParams, useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2'; // Importamos SweetAlert2 para alertas
 import '../css/Formulario_Pacientes.css';
 
 const preguntas = [
@@ -14,15 +15,22 @@ const preguntas = [
 ];
 
 const FormularioEvaluacionI = () => {
-  const { idPaciente } = useParams(); // Obtenemos el ID del paciente desde la URL
+  const { idPaciente } = useParams();
   const [respuestas, setRespuestas] = useState({});
   const [comentarios, setComentarios] = useState({});
   const [criterios, setCriterios] = useState(null);
   const [editId, setEditId] = useState(null);
+  const [bloqueado, setBloqueado] = useState(false);
+  
+  const navigate = useNavigate();
 
-  const navigate = useNavigate(); // Hook para navegar a otra ruta
+  const BLOQUEO_KEY = `criterios_bloqueado_${idPaciente}`;
 
   useEffect(() => {
+    const bloqueoGuardado = localStorage.getItem(BLOQUEO_KEY);
+    if (bloqueoGuardado === 'true') {
+      setBloqueado(true);
+    }
     if (idPaciente) {
       fetchCriteriosInclusion();
     }
@@ -30,7 +38,7 @@ const FormularioEvaluacionI = () => {
 
   const fetchCriteriosInclusion = async () => {
     try {
-      const res = await fetch(`http://127.0.0.1:5000/form/criterios_inclusion/${idPaciente}`);
+      const res = await fetch(`https://api.weareinfinite.mx/form/criterios_inclusion/${idPaciente}`);
       const data = await res.json();
       const lista = Array.isArray(data) ? data : data.result || [];
 
@@ -63,7 +71,7 @@ const FormularioEvaluacionI = () => {
         setEditId(null);
       }
     } catch (error) {
-      alert('Error al obtener los criterios de inclusión');
+      Swal.fire('Error', 'Error al obtener los criterios de inclusión', 'error');
       console.error(error);
     }
   };
@@ -85,9 +93,10 @@ const FormularioEvaluacionI = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Validación de que todas las preguntas han sido respondidas
     for (let pregunta of preguntas) {
       if (!respuestas[pregunta.id]) {
-        alert(`Responda: ${pregunta.texto}`);
+        Swal.fire('Advertencia', `Por favor, responde: ${pregunta.texto}`, 'warning');
         return;
       }
     }
@@ -103,7 +112,7 @@ const FormularioEvaluacionI = () => {
 
     try {
       const method = editId ? 'PUT' : 'POST';
-      const url = `http://127.0.0.1:5000/form/criterios_inclusion${editId ? `/${editId}` : ''}`;
+      const url = `https://api.weareinfinite.mx/form/criterios_inclusion${editId ? `/${editId}` : ''}`;
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -112,11 +121,11 @@ const FormularioEvaluacionI = () => {
 
       if (!res.ok) throw new Error(await res.text());
 
-      alert(editId ? 'Criterios de Inclusión actualizados correctamente' : 'Criterios de Inclusión guardados');
+      Swal.fire('Éxito', editId ? 'Criterios de Inclusión actualizados correctamente' : 'Criterios de Inclusión guardados', 'success');
       limpiarFormulario();
       fetchCriteriosInclusion();
     } catch (error) {
-      alert('Error en el servidor: ' + error.message);
+      Swal.fire('Error', 'Error en el servidor: ' + error.message, 'error');
     }
   };
 
@@ -125,23 +134,61 @@ const FormularioEvaluacionI = () => {
     if (!window.confirm('¿Seguro que deseas eliminar este registro?')) return;
 
     try {
-      const res = await fetch(`http://127.0.0.1:5000/form/criterios_inclusion/${criterios.id}`, {
+      const res = await fetch(`https://api.weareinfinite.mx/form/criterios_inclusion/${criterios.id}`, {
         method: 'DELETE',
       });
 
       if (!res.ok) throw new Error(await res.text());
 
-      alert('Registro eliminado');
+      Swal.fire('Éxito', 'Registro eliminado', 'success');
       setCriterios(null);
       limpiarFormulario();
     } catch (error) {
-      alert('Error al eliminar: ' + error.message);
+      Swal.fire('Error', 'Error al eliminar: ' + error.message, 'error');
     }
+  };
+
+  const bloquearFormulario = () => {
+    Swal.fire({
+      title: '¿Estás seguro?',
+      text: 'Una vez bloqueado, solo podrá desbloquearse con contraseña.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, bloquear',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        localStorage.setItem(BLOQUEO_KEY, 'true');
+        setBloqueado(true);
+        Swal.fire('Formulario Bloqueado', 'Los campos están ahora bloqueados.', 'info');
+      }
+    });
+  };
+
+  const desbloquearFormulario = () => {
+    Swal.fire({
+      title: 'Desbloquear formulario',
+      input: 'password',
+      inputLabel: 'Introduce la contraseña',
+      inputPlaceholder: 'Contraseña',
+      showCancelButton: true,
+      confirmButtonText: 'Desbloquear',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        if (result.value === 'infinite') {
+          localStorage.removeItem(BLOQUEO_KEY);
+          setBloqueado(false);
+          Swal.fire('Formulario Desbloqueado', 'Puedes editar nuevamente los datos.', 'success');
+        } else {
+          Swal.fire('Contraseña incorrecta', 'No se puede desbloquear el formulario.', 'error');
+        }
+      }
+    });
   };
 
   const handleNext = () => {
     if (idPaciente) {
-      navigate(`/CriteriosI/${idPaciente}`); // Redirige a la página con el idPaciente
+      navigate(`/CriteriosI/${idPaciente}`);
     }
   };
 
@@ -167,7 +214,16 @@ const FormularioEvaluacionI = () => {
             const esNo = respuesta === 'No';
 
             return (
-              <div className="pregunta" key={pregunta.id}>
+              <div
+                className="pregunta"
+                key={pregunta.id}
+                style={{
+                  border: esNo ? '2px solid red' : '1px solid transparent',
+                  borderRadius: '8px',
+                  padding: '10px',
+                  marginBottom: '15px',
+                }}
+              >
                 <span dangerouslySetInnerHTML={{ __html: pregunta.texto }} />
                 <div className="radio-group">
                   {['Sí', 'No'].map(op => (
@@ -178,7 +234,7 @@ const FormularioEvaluacionI = () => {
                         value={op}
                         checked={respuesta === op}
                         onChange={() => handleChange(pregunta.id, op)}
-                        required
+                        disabled={bloqueado}
                       />
                       <span className="custom-radio">{op}</span>
                     </label>
@@ -191,18 +247,22 @@ const FormularioEvaluacionI = () => {
                     placeholder="Ingrese una observación..."
                     value={comentarios[pregunta.id] || ''}
                     onChange={(e) => handleComentarioChange(pregunta.id, e.target.value)}
+                    disabled={bloqueado}
                   />
                 )}
               </div>
             );
           })}
 
-          <button type="submit">{editId ? 'Actualizar' : 'Enviar'}</button>
-          {editId && (
-            <button type="button" onClick={handleDelete}>Eliminar registro</button>
-          )}
-
-          <button type="button" onClick={handleNext}>Siguiente</button> {/* Botón de siguiente */}
+          <div className="btn-container">
+            {bloqueado ? (
+              <button type="button" onClick={desbloquearFormulario}>Desbloquear</button>
+            ) : (
+              <button type="button" onClick={bloquearFormulario}>Bloquear</button>
+            )}
+            <button type="submit" disabled={bloqueado}>{editId ? 'Actualizar' : 'Enviar'}</button>
+            <button type="button" onClick={handleNext}>Siguiente</button>
+          </div>
         </form>
       </div>
     </div>

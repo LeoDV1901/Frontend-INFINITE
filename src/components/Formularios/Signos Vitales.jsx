@@ -65,7 +65,7 @@ useEffect(() => {
 
   const fetchSignos = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/form/signos/paciente/${idPaciente}`);
+      const response = await fetch(`https://api.weareinfinite.mx/form/signos/paciente/${idPaciente}`);
       const data = await response.json();
       if (data && data.length > 0) {
         const ultimo = data[data.length - 1]; 
@@ -120,8 +120,8 @@ const handleSubmit = async (e) => {
   };
 
   const url = registroExistente
-    ? `http://localhost:5000/form/signos/${editId}`
-    : 'http://localhost:5000/form/signos';
+    ? `https://api.weareinfinite.mx/form/signos/${editId}`
+    : 'https://api.weareinfinite.mx/form/signos';
 
   const method = registroExistente ? 'PUT' : 'POST';
 
@@ -165,7 +165,7 @@ const handleDelete = async () => {
   if (!editId || !window.confirm('¿Deseas eliminar este registro?')) return;
 
   try {
-    const response = await fetch(`http://localhost:5000/form/signos/${editId}`, {
+    const response = await fetch(`https://api.weareinfinite.mx/form/signos/${editId}`, {
       method: 'DELETE',
     });
 
@@ -422,19 +422,21 @@ const handleDelete = async () => {
           </tbody>
         </table>
 
-        <div>
-          
-          {registroExistente && (
-            <>
-              <button type="button" onClick={handleSubmit} style={{ marginLeft: '10px' }}>
-                Actualizar
-              </button>
-              <button type="button" onClick={handleDelete} style={{ marginLeft: '10px' }}>
-                Eliminar
-              </button>
-            </>
-          )}
-        </div>
+      <div>
+  {registroExistente ? (
+    <>
+      <button type="submit" style={{ marginLeft: '10px' }}>
+        Actualizar
+      </button>
+      <button type="button" onClick={handleDelete} style={{ marginLeft: '10px' }}>
+        Eliminar
+      </button>
+    </>
+  ) : (
+    <button type="submit">Guardar</button>
+  )}
+</div>
+
       </form>
     </div>
   );

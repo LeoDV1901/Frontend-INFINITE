@@ -21,7 +21,7 @@ const SignosVitalesGraph = () => {
 
   // Hacer la solicitud a la API para obtener los datos
  useEffect(() => {
-  axios.get('http://localhost:5000/form/signos/all')
+  axios.get('http://127.0.0.1:5000/form/signos/all')
     .then(response => {
       console.log('Datos recibidos:', response.data); // Verifica los datos recibidos
       const parsedData = {

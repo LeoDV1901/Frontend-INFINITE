@@ -9,6 +9,7 @@ const procedimientos = [
   "Signos Vitales",
   "Medicamentos Concomitantes",
   "Eventos Adversos",
+  "Estudios",  // Agregado "Estudios"
 ];
 
 const visitas = ["Visita 0", "Visita 1", "Visita 2", "Visita 3"];
@@ -25,14 +26,15 @@ const links = {
   },
   "Signos Vitales": {
     "Visita 0": "/Signos_Vitales",
-    "Visita 1": "/signos-vitales/v1",
-    "Visita 2": "/signos-vitales/v2",
   },
   "Medicamentos Concomitantes": {
     "Visita 0": "/MedicamentosConcomitantes",
   },
   "Eventos Adversos": {
     "Visita 0": "/eventosAdversos",
+  },
+  "Estudios": {  // Enlace para "Estudios"
+    "Visita 0": "/Archivos",  // Ruta a cambiar según tu requerimiento
   },
 };
 
@@ -43,70 +45,128 @@ const TablaProcedimientos = () => {
   const [botonColors, setBotonColors] = useState({
     FirmaConsentimiento: 'green',
     SignosVitales: 'green',
-    CriteriosInclusion: 'green',
+    CriteriosInclusion: 'green', // Inicialmente verde
+    HistoriaClinica: 'green',
     MedicamentosConcomitantes: 'red',
     EventosAdversos: 'red',
+    Estudios: 'green',  // Inicialmente verde
   });
 
-  useEffect(() => {
-    if (!idPaciente) return;
+ useEffect(() => {
+  if (!idPaciente) return;
 
-    const fetchData = async () => {
-      try {
-        const responseConsentimiento = await fetch(`http://127.0.0.1:5000/form/verifyconsentimiento/${idPaciente}`);
-        const dataConsentimiento = await responseConsentimiento.json();
-        setBotonColors(prev => ({
-          ...prev,
-          FirmaConsentimiento: dataConsentimiento.respuesta_correcta ? 'green' : 'red'
-        }));
+  const fetchConsentimiento = async () => {
+    try {
+      const res = await fetch(`https://api.weareinfinite.mx/form/verifyconsentimiento/${idPaciente}`);
+      const data = await res.json();
+      setBotonColors(prev => ({
+        ...prev,
+        FirmaConsentimiento: data.respuesta_correcta ? 'green' : 'red'
+      }));
+    } catch (err) {
+      console.error("Error en consentimiento:", err);
+      setBotonColors(prev => ({ ...prev, FirmaConsentimiento: 'red' }));
+    }
+  };
 
-        const responseSignos = await fetch(`http://localhost:5000/form/verifysignos_vitales/${idPaciente}`);
-        const dataSignos = await responseSignos.json();
-        const isDataOutOfRange = dataSignos.some((signo) =>
-          Object.keys(signo).some((key) => key.includes('_fuera_de_rango') && signo[key])
-        );
-        setBotonColors(prev => ({
-          ...prev,
-          SignosVitales: isDataOutOfRange ? 'red' : 'green'
-        }));
+  const fetchSignos = async () => {
+    try {
+      const res = await fetch(`https://api.weareinfinite.mx/form/verifysignos_vitales/${idPaciente}`);
+      const data = await res.json();
+      const isDataOutOfRange = data.some((signo) =>
+        Object.keys(signo).some((key) => key.includes('_fuera_de_rango') && signo[key])
+      );
+      setBotonColors(prev => ({
+        ...prev,
+        SignosVitales: isDataOutOfRange ? 'red' : 'green'
+      }));
+    } catch (err) {
+      console.error("Error en signos vitales:", err);
+      setBotonColors(prev => ({ ...prev, SignosVitales: 'red' }));
+    }
+  };
 
-        const responseCriterios = await fetch(`http://127.0.0.1:5000/form/verifycriterios_inclusion/${idPaciente}`);
-        const dataCriterios = await responseCriterios.json();
-        setBotonColors(prev => ({
-          ...prev,
-          CriteriosInclusion: dataCriterios.respuesta_correcta ? 'green' : 'red'
-        }));
+  const fetchCriterios = async () => {
+    try {
+      const resInclusion = await fetch(`https://api.weareinfinite.mx/form/verifycriterios_inclusion/${idPaciente}`);
+      const dataInclusion = await resInclusion.json();
 
-        const responseMedicamentos = await fetch(`http://127.0.0.1:5000/form/medicamentos_concomitantesV/${idPaciente}`);
-        const dataMedicamentos = await responseMedicamentos.json();
-        console.log("Medicamentos:", dataMedicamentos);
-        setBotonColors(prev => ({
-          ...prev,
-          MedicamentosConcomitantes: dataMedicamentos.respuestas_completas ? 'green' : 'red'
-        }));
+      const resExclusion = await fetch(`https://api.weareinfinite.mx/form/criterios_exclusionV/${idPaciente}`);
+      const dataExclusion = await resExclusion.json();
 
-        const responseEventos = await fetch(`http://127.0.0.1:5000/form/eventos_adversosV/${idPaciente}`);
-        const dataEventos = await responseEventos.json();
-        console.log("Eventos:", dataEventos);
-        setBotonColors(prev => ({
-          ...prev,
-          EventosAdversos: dataEventos.respuestas_completas ? 'green' : 'red'
-        }));
+      const correctos = dataInclusion.respuesta_correcta && dataExclusion.respuesta_correcta;
+      setBotonColors(prev => ({
+        ...prev,
+        CriteriosInclusion: correctos ? 'green' : 'red'
+      }));
+    } catch (err) {
+      console.error("Error en criterios:", err);
+      setBotonColors(prev => ({ ...prev, CriteriosInclusion: 'red' }));
+    }
+  };
 
-      } catch (error) {
-        console.error("Error al obtener los datos:", error);
-        setBotonColors({
-          FirmaConsentimiento: 'red',
-          SignosVitales: 'red',
-          CriteriosInclusion: 'red',
-          MedicamentosConcomitantes: 'red',
-          EventosAdversos: 'red',
-        });
-      }
-    };
+  const fetchHistoria = async () => {
+    try {
+      const res = await fetch(`https://api.weareinfinite.mx/form/historia_clinicaVerify/${idPaciente}`);
+      const data = await res.json();
+      setBotonColors(prev => ({
+        ...prev,
+        HistoriaClinica: data.todas_contestadas ? 'green' : 'red'
+      }));
+    } catch (err) {
+      console.error("Error en historia clínica:", err);
+      setBotonColors(prev => ({ ...prev, HistoriaClinica: 'red' }));
+    }
+  };
 
-    fetchData();
-  }, [idPaciente]);
+  const fetchMedicamentos = async () => {
+    try {
+      const res = await fetch(`https://api.weareinfinite.mx/form/medicamentos_concomitantesV/${idPaciente}`);
+      const data = await res.json();
+      setBotonColors(prev => ({
+        ...prev,
+        MedicamentosConcomitantes: data.respuestas_completas ? 'green' : 'red'
+      }));
+    } catch (err) {
+      console.error("Error en medicamentos:", err);
+      setBotonColors(prev => ({ ...prev, MedicamentosConcomitantes: 'red' }));
+    }
+  };
+
+  const fetchEventos = async () => {
+    try {
+      const res = await fetch(`https://api.weareinfinite.mx/form/eventos_adversosV/${idPaciente}`);
+      const data = await res.json();
+      setBotonColors(prev => ({
+        ...prev,
+        EventosAdversos: data.respuestas_completas ? 'green' : 'red'
+      }));
+    } catch (err) {
+      console.error("Error en eventos adversos:", err);
+      setBotonColors(prev => ({ ...prev, EventosAdversos: 'red' }));
+    }
+  };
+
+  const fetchEstudios = async () => {
+    try {
+      // Simulación. Modifica según la lógica real que uses
+      setBotonColors(prev => ({ ...prev, Estudios: 'green' }));
+    } catch (err) {
+      setBotonColors(prev => ({ ...prev, Estudios: 'red' }));
+    }
+  };
+
+  // Ejecuta todos los fetch en paralelo, no en cadena
+  fetchConsentimiento();
+  fetchSignos();
+  fetchCriterios();
+  fetchHistoria();
+  fetchMedicamentos();
+  fetchEventos();
+  fetchEstudios();
+
+}, [idPaciente]);
+
 
   const handleClick = (link) => {
     if (link !== "#") {
@@ -138,15 +198,19 @@ const TablaProcedimientos = () => {
                 const isFirmaConsentimiento = proc === "Firma de consentimiento Informado";
                 const isSignosVitales = proc === "Signos Vitales";
                 const isCriteriosInclusion = proc === "Criterios de Inclusión/ Exclusión";
+                const isHistoriaClinica = proc === "Historia Clínica";
                 const isMedicamentosConcomitantes = proc === "Medicamentos Concomitantes";
                 const isEventosAdversos = proc === "Eventos Adversos";
+                const isEstudios = proc === "Estudios";  // Verificar "Estudios"
 
                 const backgroundColor =
                   isFirmaConsentimiento ? botonColors.FirmaConsentimiento :
                   isSignosVitales ? botonColors.SignosVitales :
                   isCriteriosInclusion ? botonColors.CriteriosInclusion :
+                  isHistoriaClinica ? botonColors.HistoriaClinica :
                   isMedicamentosConcomitantes ? botonColors.MedicamentosConcomitantes :
                   isEventosAdversos ? botonColors.EventosAdversos :
+                  isEstudios ? botonColors.Estudios :  // Colorear "Estudios"
                   "initial";
 
                 return (

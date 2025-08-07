@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 import './css/login.css';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('admin@infinite.com.mx');
+  const [password, setPassword] = useState('Admin123');
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      const response = await fetch('http://localhost:5000/login', {
+      const response = await fetch('https://api.weareinfinite.mx/admin/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -21,19 +22,33 @@ const Login = () => {
 
       const data = await response.json();
 
-      if (response.ok) {
-        // Login exitoso o redirección válida
-        navigate(data.redirect);
+      if (response.ok && data.access_token) {
+        // Guardamos el token en localStorage
+        localStorage.setItem('token', data.access_token);
+
+        Swal.fire({
+          icon: 'success',
+          title: '¡Bienvenido!',
+          text: 'Inicio de sesión exitoso',
+          showConfirmButton: false,
+          timer: 1500,
+        }).then(() => {
+          navigate('/Index');
+        });
       } else {
-        // Muestra mensaje de error (403, 401, 400, etc.)
-        alert(data.message);
-        if (data.redirect) {
-          navigate(data.redirect);
-        }
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: data.mensaje || 'Correo o contraseña incorrectos',
+        });
       }
     } catch (error) {
-      console.error('Error al iniciar sesión:', error);
-      alert('Error de conexión con el servidor');
+      console.error('Error de red:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se pudo conectar al servidor',
+      });
     }
   };
 
@@ -42,19 +57,19 @@ const Login = () => {
       <img src="/image001.png" alt="Logo Infinite" className="logo" />
       <h2>Iniciar Sesión</h2>
       <form onSubmit={handleSubmit}>
-        <input 
-          type="email" 
-          placeholder="Correo electrónico" 
+        <input
+          type="email"
+          placeholder="Correo electrónico"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          required 
+          required
         />
-        <input 
-          type="password" 
-          placeholder="Contraseña" 
+        <input
+          type="password"
+          placeholder="Contraseña"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          required 
+          required
         />
         <button type="submit">Entrar</button>
       </form>

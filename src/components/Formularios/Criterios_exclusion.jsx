@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2'; // <- Importación de SweetAlert2
 import '../css/Formulario_Pacientes.css';
 
 const preguntas = [
@@ -33,10 +34,9 @@ const EvolucionCriteriosExclusion = () => {
   const [editId, setEditId] = useState(null);
   const navigate = useNavigate();
 
-  // Cargar los criterios de exclusión existentes para el paciente
   const fetchCriteriosExclusion = async () => {
     try {
-      const res = await fetch(`http://127.0.0.1:5000/form/criterios_exclusion/${idPaciente}`);
+      const res = await fetch(`https://api.weareinfinite.mx/form/criterios_exclusion/${idPaciente}`);
       const data = await res.json();
       const lista = Array.isArray(data) ? data : data.result || [];
 
@@ -45,58 +45,23 @@ const EvolucionCriteriosExclusion = () => {
         setCriteriosExistentes(ultimo);
         setEditId(ultimo.id);
 
-        // Mapear las respuestas y comentarios
-        setRespuestas({
-          p1: ultimo.pregunta1,
-          p2: ultimo.pregunta2,
-          p3: ultimo.pregunta3,
-          p4: ultimo.pregunta4,
-          p5: ultimo.pregunta5,
-          p6: ultimo.pregunta6,
-          p7: ultimo.pregunta7,
-          p8: ultimo.pregunta8,
-          p9: ultimo.pregunta9,
-          p10: ultimo.pregunta10,
-          p11: ultimo.pregunta11,
-          p12: ultimo.pregunta12,
-          p13: ultimo.pregunta13,
-          p14: ultimo.pregunta14,
-          p15: ultimo.pregunta15,
-          p16: ultimo.pregunta16,
-          p17: ultimo.pregunta17,
-          p18: ultimo.pregunta18,
-          p19: ultimo.pregunta19,
-          p20: ultimo.pregunta20,
-        });
+        setRespuestas(Object.fromEntries(
+          preguntas.map(p => [p.id, ultimo[`pregunta${p.id.slice(1)}`]])
+        ));
 
-        setComentarios({
-          p1: ultimo.comentario1,
-          p2: ultimo.comentario2,
-          p3: ultimo.comentario3,
-          p4: ultimo.comentario4,
-          p5: ultimo.comentario5,
-          p6: ultimo.comentario6,
-          p7: ultimo.comentario7,
-          p8: ultimo.comentario8,
-          p9: ultimo.comentario9,
-          p10: ultimo.comentario10,
-          p11: ultimo.comentario11,
-          p12: ultimo.comentario12,
-          p13: ultimo.comentario13,
-          p14: ultimo.comentario14,
-          p15: ultimo.comentario15,
-          p16: ultimo.comentario16,
-          p17: ultimo.comentario17,
-          p18: ultimo.comentario18,
-          p19: ultimo.comentario19,
-          p20: ultimo.comentario20,
-        });
+        setComentarios(Object.fromEntries(
+          preguntas.map(p => [p.id, ultimo[`comentario${p.id.slice(1)}`]])
+        ));
       } else {
         setCriteriosExistentes(null);
         setEditId(null);
       }
     } catch (error) {
-      alert('Error al obtener registros');
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Error al obtener registros.',
+      });
       console.error(error);
     }
   };
@@ -107,38 +72,40 @@ const EvolucionCriteriosExclusion = () => {
     }
   }, [idPaciente]);
 
-  // Manejar el cambio de respuestas
   const handleChange = (id, value) => {
     setRespuestas(prev => ({ ...prev, [id]: value }));
   };
 
-  // Manejar el cambio de comentarios
   const handleComentarioChange = (id, value) => {
     setComentarios(prev => ({ ...prev, [id]: value }));
   };
 
-  // Enviar el formulario (crear o actualizar)
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Verificar que todas las preguntas tengan respuesta
     const todasRespondidas = preguntas.every(p => respuestas[p.id]);
     if (!todasRespondidas) {
-      alert('Por favor responde todas las preguntas.');
+      Swal.fire({
+        icon: 'warning',
+        title: 'Faltan respuestas',
+        text: 'Por favor responde todas las preguntas.',
+      });
       return;
     }
 
-    // Verificar que los comentarios estén completos cuando la respuesta sea "Sí"
     const faltanComentarios = preguntas.some(p =>
       respuestas[p.id] === 'Sí' && !comentarios[p.id]?.trim()
     );
 
     if (faltanComentarios) {
-      alert('Por favor ingrese una observación en todas las respuestas "Sí".');
+      Swal.fire({
+        icon: 'warning',
+        title: 'Faltan comentarios',
+        text: 'Por favor ingrese una observación en todas las respuestas "Sí".',
+      });
       return;
     }
 
-    // Preparar los datos para enviar
     const payload = {
       idPaciente: idPaciente,
       respuestas: preguntas.map(p => ({
@@ -149,65 +116,91 @@ const EvolucionCriteriosExclusion = () => {
     };
 
     try {
+      let response;
       if (criteriosExistentes) {
-        // Si ya existen criterios, realizamos la actualización
-        const response = await fetch(`http://127.0.0.1:5000/form/criterios_exclusion/${criteriosExistentes.id}`, {
+        response = await fetch(`https://api.weareinfinite.mx/form/criterios_exclusion/${criteriosExistentes.id}`, {
           method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
 
         if (response.ok) {
-          alert('Criterios actualizados con éxito');
+          await Swal.fire({
+            icon: 'success',
+            title: 'Actualizado',
+            text: 'Criterios actualizados con éxito.',
+          });
         } else {
-          alert('Error al actualizar los criterios');
+          throw new Error('Error al actualizar');
         }
       } else {
-        // Si no existen criterios, creamos nuevos
-        const response = await fetch('http://127.0.0.1:5000/form/criterios_exclusion', {
+        response = await fetch('https://api.weareinfinite.mx/form/criterios_exclusion', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
 
         if (response.ok) {
-          alert('Criterios creados con éxito');
+          await Swal.fire({
+            icon: 'success',
+            title: 'Guardado',
+            text: 'Criterios creados con éxito.',
+          });
         } else {
-          alert('Error al crear los criterios');
+          throw new Error('Error al crear');
         }
       }
 
-      // Redirigir después de guardar los datos
       navigate(`/CriteriosI/${idPaciente}`);
     } catch (error) {
       console.error('Error al enviar los datos:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Hubo un error al enviar los datos.',
+      });
     }
   };
 
-  // Eliminar los criterios de exclusión existentes
   const handleDelete = async () => {
     if (!criteriosExistentes || !criteriosExistentes.id) {
       console.error("No hay criterios para eliminar.");
       return;
     }
 
-    try {
-      const response = await fetch(`http://127.0.0.1:5000/form/criterios_exclusion/${criteriosExistentes.id}`, {
-        method: 'DELETE',
-      });
+    const confirm = await Swal.fire({
+      title: '¿Estás seguro?',
+      text: 'Esta acción eliminará los criterios actuales.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+    });
 
-      if (response.ok) {
-        alert('Criterios eliminados con éxito');
-        navigate(`/CriteriosI/${idPaciente}`);
-      } else {
-        alert('Error al eliminar los criterios');
+    if (confirm.isConfirmed) {
+      try {
+        const response = await fetch(`https://api.weareinfinite.mx/form/criterios_exclusion/${criteriosExistentes.id}`, {
+          method: 'DELETE',
+        });
+
+        if (response.ok) {
+          await Swal.fire({
+            icon: 'success',
+            title: 'Eliminado',
+            text: 'Criterios eliminados con éxito.',
+          });
+          navigate(`/CriteriosI/${idPaciente}`);
+        } else {
+          throw new Error('Error al eliminar');
+        }
+      } catch (error) {
+        console.error('Error al eliminar los criterios:', error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'No se pudieron eliminar los criterios.',
+        });
       }
-    } catch (error) {
-      console.error('Error al eliminar los criterios:', error);
     }
   };
 
@@ -255,13 +248,13 @@ const EvolucionCriteriosExclusion = () => {
                     No
                   </label>
                 </div>
-                {respuesta === 'Sí' && (
+                {esSi && (
                   <div className="comentario">
                     <textarea
                       value={comentarios[pregunta.id] || ''}
                       onChange={(e) => handleComentarioChange(pregunta.id, e.target.value)}
                       placeholder="Comentario sobre esta respuesta..."
-                      style={{ color: 'black' }}  
+                      style={{ color: 'black' }}
                     />
                   </div>
                 )}

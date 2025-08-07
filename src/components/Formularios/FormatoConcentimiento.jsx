@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import '../css/Formulario_Pacientes.css';
 import { useParams } from 'react-router-dom';
+import Swal from 'sweetalert2';
 
 const preguntas = [
   { id: 'p1', texto: '¿El paciente aceptó su participación en el estudio?' },
@@ -10,7 +11,7 @@ const preguntas = [
 ];
 
 const ConcentimientoInformado = () => {
-  const { idPaciente } = useParams(); // Obtenemos el ID desde la URL
+  const { idPaciente } = useParams();
   const [respuestas, setRespuestas] = useState({});
   const [comentarios, setComentarios] = useState({});
   const [horaValida, setHoraValida] = useState(true);
@@ -26,7 +27,7 @@ const ConcentimientoInformado = () => {
 
   const fetchConsentimiento = async () => {
     try {
-      const res = await fetch(`http://127.0.0.1:5000/form/consentimiento/${idPaciente}`);
+      const res = await fetch(`https://api.weareinfinite.mx/form/consentimiento/${idPaciente}`);
       const data = await res.json();
       const lista = Array.isArray(data) ? data : data.result || [];
 
@@ -50,7 +51,7 @@ const ConcentimientoInformado = () => {
         setEditId(null);
       }
     } catch (error) {
-      alert('Error al obtener registros');
+      Swal.fire('Error', 'Error al obtener registros', 'error');
       console.error(error);
     }
   };
@@ -88,14 +89,14 @@ const ConcentimientoInformado = () => {
 
     for (let pregunta of preguntas) {
       if (!respuestas[pregunta.id] && pregunta.id !== 'p2') {
-        alert(`Responda: ${pregunta.texto}`);
+        Swal.fire('Campo incompleto', `Responda: ${pregunta.texto}`, 'warning');
         return;
       }
     }
 
     if (!comentarios.p2 || !horaValida) {
       setHoraValida(false);
-      alert('Ingrese una hora válida (ej: 13:45)');
+      Swal.fire('Hora inválida', 'Ingrese una hora válida (ej: 13:45)', 'warning');
       return;
     }
 
@@ -111,7 +112,7 @@ const ConcentimientoInformado = () => {
 
     try {
       const method = editId ? 'PUT' : 'POST';
-      const url = `http://127.0.0.1:5000/form/consentimiento${editId ? `/${editId}` : ''}`;
+      const url = `https://api.weareinfinite.mx/form/consentimiento${editId ? `/${editId}` : ''}`;
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -120,34 +121,49 @@ const ConcentimientoInformado = () => {
 
       if (!res.ok) throw new Error(await res.text());
 
-      alert(editId ? 'Actualizado correctamente' : 'Consentimiento guardado');
+      Swal.fire({
+        icon: 'success',
+        title: editId ? 'Actualizado correctamente' : 'Consentimiento guardado',
+        showConfirmButton: false,
+        timer: 1500
+      });
+
       limpiarFormulario();
       fetchConsentimiento();
     } catch (error) {
-      alert('Error en el servidor: ' + error.message);
+      Swal.fire('Error del servidor', error.message, 'error');
     }
   };
 
   const handleDelete = async () => {
     if (!consentimiento || !consentimiento.id) return;
-    if (!window.confirm('¿Seguro que deseas eliminar este registro?')) return;
+
+    const result = await Swal.fire({
+      title: '¿Estás seguro?',
+      text: 'Este registro se eliminará permanentemente.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
-      const res = await fetch(`http://127.0.0.1:5000/form/consentimiento/${consentimiento.id}`, {
+      const res = await fetch(`https://api.weareinfinite.mx/form/consentimiento/${consentimiento.id}`, {
         method: 'DELETE',
       });
 
       if (!res.ok) throw new Error(await res.text());
 
-      alert('Registro eliminado');
+      Swal.fire('Eliminado', 'Registro eliminado correctamente.', 'success');
       setConsentimiento(null);
       limpiarFormulario();
     } catch (error) {
-      alert('Error al eliminar: ' + error.message);
+      Swal.fire('Error', 'Error al eliminar: ' + error.message, 'error');
     }
   };
 
-  // Si no hay idPaciente en la URL
   if (!idPaciente) {
     return (
       <div className="fondo">
@@ -220,9 +236,7 @@ const ConcentimientoInformado = () => {
 
           <button type="submit">{editId ? 'Actualizar' : 'Enviar'}</button>
           {editId && (
-            <>
-              <button type="button" onClick={handleDelete}>Eliminar registro</button>
-            </>
+            <button type="button" onClick={handleDelete}>Eliminar registro</button>
           )}
         </form>
       </div>
