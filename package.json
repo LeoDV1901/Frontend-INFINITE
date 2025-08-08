@@ -20,8 +20,7 @@
     "react-scripts": "5.0.1",
     "sweetalert2": "^11.22.2",
     "web-vitals": "^2.1.4",
-    "xlsx": "^0.18.5",
-    "proxy": "https://api.weareinfinite.mx"
+    "xlsx": "^0.18.5"
 
   },
   "scripts": {

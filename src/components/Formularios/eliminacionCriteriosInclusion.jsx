@@ -174,7 +174,7 @@ const EliminacionFormularioEvaluacionI = () => {
 
   const handleNext = () => {
     if (idPaciente) {
-      navigate(`/CriteriosI/${idPaciente}`);
+      navigate(`/CriteriosE_Eliminacion/${idPaciente}`);
     }
   };
 
@@ -192,7 +192,7 @@ const EliminacionFormularioEvaluacionI = () => {
     <div className="fondo">
       <div className="container glass">
         <img src="/image001.png" alt="Logo Infinite" className="logo" />
-        <h2 style={{ color: '#ff5733' }}>Criterios de Inclusión</h2>
+        <h2 style={{ color: '#ff5733' }}>Criterios de Eliminacion</h2>
 
         <form onSubmit={handleSubmit}>
           {preguntas.map(pregunta => {

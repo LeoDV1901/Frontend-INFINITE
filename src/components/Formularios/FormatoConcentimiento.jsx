@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import '../css/Formulario_Pacientes.css';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 
 const preguntas = [
@@ -12,14 +12,24 @@ const preguntas = [
 
 const ConcentimientoInformado = () => {
   const { idPaciente } = useParams();
+  const navigate = useNavigate();
+
   const [respuestas, setRespuestas] = useState({});
   const [comentarios, setComentarios] = useState({});
   const [horaValida, setHoraValida] = useState(true);
   const [horaError, setHoraError] = useState('');
   const [editId, setEditId] = useState(null);
   const [consentimiento, setConsentimiento] = useState(null);
+  const [bloqueado, setBloqueado] = useState(false);
+
+  const BLOQUEO_KEY = `consentimiento_bloqueado_${idPaciente}`;
 
   useEffect(() => {
+    const bloqueoGuardado = localStorage.getItem(BLOQUEO_KEY);
+    if (bloqueoGuardado === 'true') {
+      setBloqueado(true);
+    }
+
     if (idPaciente) {
       fetchConsentimiento();
     }
@@ -46,13 +56,10 @@ const ConcentimientoInformado = () => {
           p3: ultimo.comentario3,
           p4: ultimo.comentario4,
         });
-      } else {
-        setConsentimiento(null);
-        setEditId(null);
       }
     } catch (error) {
       Swal.fire('Error', 'Error al obtener registros', 'error');
-      console.error(error);
+      navigate(`/Cronograma/${idPaciente}`);
     }
   };
 
@@ -101,7 +108,7 @@ const ConcentimientoInformado = () => {
     }
 
     const payload = {
-      idPaciente: idPaciente,
+      idPaciente,
       respuestas: [
         { id: 'p1', respuesta: respuestas.p1, comentario: comentarios.p1 || '' },
         { id: 'p2', comentario: comentarios.p2 },
@@ -121,47 +128,49 @@ const ConcentimientoInformado = () => {
 
       if (!res.ok) throw new Error(await res.text());
 
-      Swal.fire({
-        icon: 'success',
-        title: editId ? 'Actualizado correctamente' : 'Consentimiento guardado',
-        showConfirmButton: false,
-        timer: 1500
-      });
-
-      limpiarFormulario();
-      fetchConsentimiento();
+      Swal.fire('Éxito', 'Datos guardados correctamente.', 'success');
+      navigate(`/Cronograma/${idPaciente}`);
     } catch (error) {
       Swal.fire('Error del servidor', error.message, 'error');
+      navigate(`/Cronograma/${idPaciente}`);
     }
   };
 
-  const handleDelete = async () => {
-    if (!consentimiento || !consentimiento.id) return;
-
-    const result = await Swal.fire({
-      title: '¿Estás seguro?',
-      text: 'Este registro se eliminará permanentemente.',
+  const bloquearFormulario = () => {
+    Swal.fire({
+      title: '¿Deseas bloquear el formulario?',
+      text: 'Luego necesitarás una contraseña para editarlo.',
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar'
+      confirmButtonText: 'Sí, bloquear',
+    }).then(result => {
+      if (result.isConfirmed) {
+        localStorage.setItem(BLOQUEO_KEY, 'true');
+        setBloqueado(true);
+        Swal.fire('Formulario bloqueado', '', 'info');
+      }
     });
+  };
 
-    if (!result.isConfirmed) return;
-
-    try {
-      const res = await fetch(`https://api.weareinfinite.mx/form/consentimiento/${consentimiento.id}`, {
-        method: 'DELETE',
-      });
-
-      if (!res.ok) throw new Error(await res.text());
-
-      Swal.fire('Eliminado', 'Registro eliminado correctamente.', 'success');
-      setConsentimiento(null);
-      limpiarFormulario();
-    } catch (error) {
-      Swal.fire('Error', 'Error al eliminar: ' + error.message, 'error');
-    }
+  const desbloquearFormulario = () => {
+    Swal.fire({
+      title: 'Desbloquear formulario',
+      input: 'password',
+      inputLabel: 'Introduce la contraseña',
+      inputPlaceholder: 'Contraseña',
+      showCancelButton: true,
+      confirmButtonText: 'Desbloquear',
+    }).then(result => {
+      if (result.isConfirmed) {
+        if (result.value === 'infinite') {
+          localStorage.removeItem(BLOQUEO_KEY);
+          setBloqueado(false);
+          Swal.fire('Desbloqueado', 'Formulario desbloqueado.', 'success');
+        } else {
+          Swal.fire('Contraseña incorrecta', '', 'error');
+        }
+      }
+    });
   };
 
   if (!idPaciente) {
@@ -200,6 +209,7 @@ const ConcentimientoInformado = () => {
                           checked={respuesta === op}
                           onChange={() => handleChange(pregunta.id, op)}
                           required
+                          disabled={bloqueado}
                         />
                         <span className="custom-radio">{op}</span>
                       </label>
@@ -214,6 +224,7 @@ const ConcentimientoInformado = () => {
                       className={`comentario-input ${!horaValida ? 'error' : ''}`}
                       value={comentarios[pregunta.id] || ''}
                       onChange={handleHoraChange}
+                      disabled={bloqueado}
                     />
                     {!horaValida && (
                       <span style={{ color: 'red', fontSize: '12px' }}>{horaError}</span>
@@ -228,16 +239,30 @@ const ConcentimientoInformado = () => {
                     placeholder="Ingrese una observación..."
                     value={comentarios[pregunta.id] || ''}
                     onChange={(e) => handleComentarioChange(pregunta.id, e.target.value)}
+                    disabled={bloqueado}
                   />
                 )}
               </div>
             );
           })}
 
-          <button type="submit">{editId ? 'Actualizar' : 'Enviar'}</button>
-          {editId && (
-            <button type="button" onClick={handleDelete}>Eliminar registro</button>
-          )}
+          <div className="actions">
+            <button type="submit" disabled={bloqueado}>
+              {editId ? 'Actualizar' : 'Enviar'}
+            </button>
+
+            {editId && !bloqueado && (
+              <button type="button" onClick={bloquearFormulario} className="btn btn-danger">
+                Bloquear formulario
+              </button>
+            )}
+
+            {bloqueado && (
+              <button type="button" onClick={desbloquearFormulario} className="btn btn-warning">
+                Desbloquear formulario
+              </button>
+            )}
+          </div>
         </form>
       </div>
     </div>

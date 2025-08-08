@@ -15,48 +15,36 @@ const UploadForm = () => {
     }
   }, [idPaciente]);
 
- const fetchArchivos = async (idPaciente) => {
+const fetchArchivos = async (idPaciente) => {
   setLoading(true);
   try {
+    // Obtener los archivos binarios directamente desde la API, sin esperar un JSON
     const response = await fetch(`https://api.weareinfinite.mx/form/archivo/${idPaciente}`, {
       method: 'GET',
       headers: {
-        'Accept': 'application/json', // Esperamos un JSON con los detalles de los archivos
+        'Accept': 'application/pdf', // Aceptamos específicamente PDFs u otros archivos binarios
       },
     });
 
     if (!response.ok) {
-      throw new Error('Error al obtener los archivos');
+      throw new Error('Error al obtener los archivos binarios');
     }
 
-    // Aquí estamos recibiendo la lista de archivos en formato JSON
-    const data = await response.json();
+    // Obtener el archivo binario como un blob
+    const blob = await response.blob();
+    const fileUrl = window.URL.createObjectURL(blob); // Creamos una URL temporal para visualizar el PDF
 
-    if (data.length > 0) {
-      // Crear URLs para cada archivo (usamos los blobs para visualización)
-      const archivosConUrls = await Promise.all(data.map(async (archivo) => {
-        const fileResponse = await fetch(`https://api.weareinfinite.mx/form/archivo/${idPaciente}/${archivo.id}`);
-        const blob = await fileResponse.blob();
-        const fileUrl = window.URL.createObjectURL(blob);
-
-        return {
-          ...archivo,
-          url: fileUrl, // Asignar la URL del archivo binario
-        };
-      }));
-
-      setArchivos(archivosConUrls);
-    } else {
-      setArchivos([]); // No hay archivos
-    }
+    // Aquí puedes asignar la URL del archivo binario a tu estado
+    setArchivos([
+      { id: idPaciente, url: fileUrl } // Ejemplo, puedes agregar más detalles si es necesario
+    ]);
   } catch (error) {
     console.error('Error al obtener los archivos:', error);
-    setArchivos([]); // Aseguramos que si hay error, la lista esté vacía
+    setArchivos([]); // Si hay error, la lista de archivos estará vacía
   } finally {
     setLoading(false);
   }
 };
-
 
   // Función para eliminar un archivo
   const handleDelete = async (fileId) => {

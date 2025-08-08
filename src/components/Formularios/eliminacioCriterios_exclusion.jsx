@@ -26,7 +26,7 @@ const preguntas = [
   { id: 'p20', texto: '20. Pacientes con antecedentes de abuso de alcohol o drogas' },
 ];
 
-const EvolucionCriteriosExclusion = () => {
+const EliminacionEvolucionCriteriosExclusion = () => {
   const { idPaciente } = useParams();
   const navigate = useNavigate();
 
@@ -162,17 +162,12 @@ const EvolucionCriteriosExclusion = () => {
       }
     });
   };
-  const handleNext = () => {
-    if (idPaciente) {
-      navigate(`/CriteriosI_Eliminacion/${idPaciente}`);
-    }
-  };
 
   return (
     <div className="fondo">
       <div className="container glass">
         <img src="/image001.png" alt="Logo Infinite" className="logo" />
-        <h2 style={{ color: '#ff5733' }}>Evolución de Criterios de Exclusión</h2>
+        <h2 style={{ color: '#ff5733' }}>Criterios de Eliminacion</h2>
         <form onSubmit={handleSubmit}>
           {preguntas.map(pregunta => {
             const respuesta = respuestas[pregunta.id];
@@ -211,7 +206,6 @@ const EvolucionCriteriosExclusion = () => {
                       value={comentarios[pregunta.id] || ''}
                       onChange={(e) => handleComentarioChange(pregunta.id, e.target.value)}
                       placeholder="Comentario sobre esta respuesta..."
-                      style={{ color: 'black' }}
                       disabled={bloqueado}
                     />
                   </div>
@@ -219,23 +213,19 @@ const EvolucionCriteriosExclusion = () => {
               </div>
             );
           })}
-
-          <div className="actions">
-            <button type="submit" className="btn btn-primary" disabled={bloqueado}>
-              {criteriosExistentes ? 'Actualizar' : 'Guardar'}
+          <div className="form-actions">
+            <button type="submit" className="submit-btn" disabled={bloqueado}>
+              Guardar
             </button>
-
-            {criteriosExistentes && !bloqueado && (
-              <button type="button" className="btn btn-danger" onClick={bloquearFormulario}>
-                Bloquear Formulario
+            {!bloqueado && (
+              <button type="button" onClick={bloquearFormulario} className="block-btn">
+                Bloquear
               </button>
             )}
-           <button type="button" onClick={handleNext}>Siguiente</button>
             {bloqueado && (
-              <button type="button" className="btn btn-warning" onClick={desbloquearFormulario}>
-                Desbloquear Formulario
+              <button type="button" onClick={desbloquearFormulario} className="unblock-btn">
+                Desbloquear
               </button>
-               
             )}
           </div>
         </form>
@@ -244,4 +234,4 @@ const EvolucionCriteriosExclusion = () => {
   );
 };
 
-export default EvolucionCriteriosExclusion;
+export default EliminacionEvolucionCriteriosExclusion;

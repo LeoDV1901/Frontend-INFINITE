@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import '../css/SignosV.css';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 
 const MedicamentosConcomitantes = () => {
   const { idPaciente } = useParams();
+  const navigate = useNavigate();
   const [registroExistente, setRegistroExistente] = useState(false);
   const [bloqueado, setBloqueado] = useState(false);
 
@@ -14,7 +15,7 @@ const MedicamentosConcomitantes = () => {
   const [nombreGenerico, setNombreGenerico] = useState('');
   const [dosisDiaria, setDosisDiaria] = useState('');
   const [presentacion, setPresentacion] = useState('');
-  const [indicacion, setIndicacion] = useState('');  // Cambio aquí de 'indicacionTerapeutica' a 'indicacion'
+  const [indicacion, setIndicacion] = useState('');
   const [fechaInicio, setFechaInicio] = useState('');
   const [fechaTermino, setFechaTermino] = useState('');
   const [continuaMedicamento, setContinuaMedicamento] = useState(null);
@@ -37,13 +38,10 @@ const MedicamentosConcomitantes = () => {
 
     if (!idPaciente) return;
 
-    // Llamada a la API para obtener los datos del paciente
     const fetchPaciente = async () => {
       try {
         const res = await fetch(`https://api.weareinfinite.mx/paciente/view/${idPaciente}`);
-        if (!res.ok) {
-          throw new Error('No se pudo obtener los datos del paciente');
-        }
+        if (!res.ok) throw new Error('No se pudo obtener los datos del paciente');
         const pacienteData = await res.json();
         setIniciales(pacienteData.iniciales || '');
       } catch (error) {
@@ -52,11 +50,12 @@ const MedicamentosConcomitantes = () => {
           icon: 'error',
           title: 'Error',
           text: 'No se pudieron cargar los datos del paciente.',
+        }).then(() => {
+          navigate(`/cronograma/${idPaciente}`);
         });
       }
     };
 
-    // Llamada a la API para obtener los datos del formulario de medicamentos concomitantes
     fetch(`https://api.weareinfinite.mx/form/medicamentos_concomitantes/${idPaciente}`)
       .then(res => {
         if (res.status === 404) {
@@ -73,7 +72,7 @@ const MedicamentosConcomitantes = () => {
           setNombreGenerico(data.nombre_medicamento || '');
           setDosisDiaria(data.dosis_diaria || '');
           setPresentacion(data.presentacion || '');
-          setIndicacion(data.indicacion || '');  // Cambio aquí para establecer el valor de 'indicacion'
+          setIndicacion(data.indicacion || '');
           setFechaInicio(formatDateForInput(data.fecha_inicio));
           setFechaTermino(formatDateForInput(data.fecha_termino));
           setContinuaMedicamento(data.continua_consumo?.toUpperCase() === 'S');
@@ -85,11 +84,13 @@ const MedicamentosConcomitantes = () => {
           icon: 'error',
           title: 'Error',
           text: 'No se pudieron cargar los datos.',
+        }).then(() => {
+          navigate(`/cronograma/${idPaciente}`);
         });
       });
 
-    fetchPaciente(); // Llamada para obtener las iniciales del paciente
-  }, [idPaciente]);
+    fetchPaciente();
+  }, [idPaciente, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -102,7 +103,7 @@ const MedicamentosConcomitantes = () => {
       nombre_medicamento: nombreGenerico,
       dosis_diaria: dosisDiaria,
       presentacion,
-      indicacion,  // Cambio aquí para usar 'indicacion' en lugar de 'indicacionTerapeutica'
+      indicacion,
       fecha_inicio: fechaInicio,
       fecha_termino: fechaTermino,
       continua_consumo: continuaMedicamento ? 'S' : 'N'
@@ -125,13 +126,18 @@ const MedicamentosConcomitantes = () => {
         timer: 2000,
         showConfirmButton: false,
       });
-      setRegistroExistente(true);
+
+      setTimeout(() => {
+        navigate(`/cronograma/${idPaciente}`);
+      }, 2000);
     } catch (error) {
       console.error('Error:', error);
       Swal.fire({
         icon: 'error',
         title: 'Error',
         text: 'Ocurrió un error al guardar los datos.',
+      }).then(() => {
+        navigate(`/cronograma/${idPaciente}`);
       });
     }
   };
@@ -236,7 +242,7 @@ const MedicamentosConcomitantes = () => {
                   <td><input type="text" value={presentacion} disabled={bloqueado} onChange={(e) => setPresentacion(e.target.value)} /></td>
                 </tr>
                 <tr>
-                  <td><label>Indicación:</label></td>  {/* Cambié aquí */}
+                  <td><label>Indicación:</label></td>
                   <td><input type="text" value={indicacion} disabled={bloqueado} onChange={(e) => setIndicacion(e.target.value)} /></td>
                 </tr>
                 <tr>

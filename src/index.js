@@ -26,6 +26,8 @@ import UploadForm from "./components/Archivos";
 import Protocolo from "./components/Protocolo";
 import ReportePaciente from "./components/Reporte";
 import CrearAdministrador from "./components/CrearAdministrador";
+import EliminacionEvolucionCriteriosExclusion from "./components/Formularios/eliminacioCriterios_exclusion";
+import EliminacionFormularioEvaluacionI from "./components/Formularios/eliminacionCriteriosInclusion";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <BrowserRouter>
@@ -55,6 +57,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <Route path="/ReportePaciente/:idPaciente" element={<ReportePaciente />} />
     <Route path="/CreateAdmin" element={<CrearAdministrador />} />
 
+    <Route path="/CriteriosE_Eliminacion/:idPaciente" element={<EliminacionEvolucionCriteriosExclusion/>} />
+    <Route path="/CriteriosI_Eliminacion/:idPaciente" element={<EliminacionFormularioEvaluacionI/>} />
     </Routes>
   </BrowserRouter>
 )
