@@ -137,7 +137,41 @@ const FormularioMedico = () => {
   };
 
   return (
-    <div className="container">
+     <div className="container">
+      <h2>Formulario de Historia Clínica</h2>
+      <form onSubmit={handleSubmit}>
+        <table>
+          <tbody>
+            <tr>
+              <td>Número de Paciente</td>
+              <td>
+                <input type="text" value={idPaciente} readOnly disabled />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Visita (Día 0) Inicio de Tratamiento</h3>
+        <table>
+          <tbody>
+            <tr>
+              <td>Fecha</td>
+              <td><input type="text" placeholder="Día" value={dia} onChange={(e) => setDia(e.target.value)} disabled={formBloqueado} /></td>
+              <td><input type="text" placeholder="Mes" value={mes} onChange={(e) => setMes(e.target.value)} disabled={formBloqueado} /></td>
+              <td><input type="text" placeholder="Año" value={anio} onChange={(e) => setAnio(e.target.value)} disabled={formBloqueado} /></td>
+            </tr>
+            <tr>
+              <td>Género</td>
+              <td>
+                <label><input type="radio" name="genero" value="Masculino" checked={genero === 'Masculino'} onChange={(e) => setGenero(e.target.value)} disabled={formBloqueado} /> Masc</label>
+              </td>
+              <td>
+                <label><input type="radio" name="genero" value="Femenino" checked={genero === 'Femenino'} onChange={(e) => setGenero(e.target.value)} disabled={formBloqueado} /> Fem</label>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        
       <h3>Signos Vitales</h3>
 <table style={{ width: '100%', marginBottom: '20px' }}>
   <tbody>
