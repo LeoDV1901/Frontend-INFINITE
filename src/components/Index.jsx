@@ -3,12 +3,15 @@ import { Link } from 'react-router-dom';
 import './css/Index.css';
 import Swal from 'sweetalert2';
 
+
 const VistaPacientes = () => {
   const [pacientes, setPacientes] = useState([]);
   const [checkboxStates, setCheckboxStates] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [searchTerm, setSearchTerm] = useState('');
+ 
+
 
   // Cargar pacientes y estados de visitas
   useEffect(() => {

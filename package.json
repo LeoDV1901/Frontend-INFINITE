@@ -21,10 +21,6 @@
     "sweetalert2": "^11.22.2",
     "web-vitals": "^2.1.4",
     "xlsx": "^0.18.5"
-<<<<<<< HEAD
-
-=======
->>>>>>> bef9b46df45dd9c0ae048a500d57db9fb8bca630
   },
   "scripts": {
     "start": "react-scripts start",

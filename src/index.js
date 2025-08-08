@@ -26,8 +26,7 @@ import UploadForm from "./components/Archivos";
 import Protocolo from "./components/Protocolo";
 import ReportePaciente from "./components/Reporte";
 import CrearAdministrador from "./components/CrearAdministrador";
-import EliminacionEvolucionCriteriosExclusion from "./components/Formularios/eliminacioCriterios_exclusion";
-import EliminacionFormularioEvaluacionI from "./components/Formularios/eliminacionCriteriosInclusion";
+import PrivateRoute from "./PrivateRoute";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <BrowserRouter>
@@ -47,7 +46,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <Route path="/FechaDiarioPaciente" element={<DiarioPacienteFecha />} />
     <Route path="/EvaluacionTratamiento" element={<EvaluacionTratamiento />} />
     <Route path="/RegistroPacientes" element={<RegistroPaciente />} />
-    <Route path="/Index" element={<VistaPacientes />} />
+    <Route path="/Index" element={<PrivateRoute element={<VistaPacientes />} />} />
+
     <Route path="/Graficas" element={<SignosVitalesGraph />} />
     <Route path="/MedicamentosConcomitantes/:idPaciente" element={<MedicamentosConcomitantes />} />
     <Route path="/EventosAdversos/:idPaciente" element={<EventosAdversos />} />
@@ -57,8 +57,6 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <Route path="/ReportePaciente/:idPaciente" element={<ReportePaciente />} />
     <Route path="/CreateAdmin" element={<CrearAdministrador />} />
 
-    <Route path="/CriteriosE_Eliminacion/:idPaciente" element={<EliminacionEvolucionCriteriosExclusion/>} />
-    <Route path="/CriteriosI_Eliminacion/:idPaciente" element={<EliminacionFormularioEvaluacionI/>} />
     </Routes>
   </BrowserRouter>
 )

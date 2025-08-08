@@ -150,7 +150,7 @@ const TablaProcedimientos = () => {
   const fetchEstudios = async () => {
     try {
       // Simulación. Modifica según la lógica real que uses
-      setBotonColors(prev => ({ ...prev, Estudios: 'green' }));
+      setBotonColors(prev => ({ ...prev, Estudios: 'transparent' }));
     } catch (err) {
       setBotonColors(prev => ({ ...prev, Estudios: 'red' }));
     }
