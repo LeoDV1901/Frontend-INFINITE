@@ -42,18 +42,6 @@ const FormularioMedico = () => {
     }
   }, [peso, talla]);
 
-  const inputStyle = (value, min, max) => {
-  const num = parseFloat(value);
-  const isValid = !isNaN(num) && num >= min && num <= max;
-
-  return {
-    border: !value || isValid ? '1px solid #ccc' : '2px solid red',
-    padding: '6px',
-    borderRadius: '4px',
-    fontSize: '14px'
-  };
-};
-
   const fetchSignos = async () => {
     try {
       const response = await fetch(`https://api.weareinfinite.mx/form/signos/paciente/${idPaciente}`);
