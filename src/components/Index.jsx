@@ -1,17 +1,24 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import './css/Index.css';
 import Swal from 'sweetalert2';
 
-
 const VistaPacientes = () => {
+  const navigate = useNavigate();
   const [pacientes, setPacientes] = useState([]);
   const [checkboxStates, setCheckboxStates] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [searchTerm, setSearchTerm] = useState('');
- 
 
+  // Verificación de Token (Protección de vista)
+  const token = localStorage.getItem('token');
+  useEffect(() => {
+    if (!token) {
+      navigate('/Login');
+    }
+  }, [token, navigate]);
 
   // Cargar pacientes y estados de visitas
   useEffect(() => {
@@ -32,7 +39,6 @@ const VistaPacientes = () => {
               continue;
             }
             const dataVisitas = await resVisitas.json();
-            // Asumimos que dataVisitas es array con { nombre_visita, seleccionada }
             const v1Estado = dataVisitas.find(v => v.nombre_visita === 'Visita 1')?.seleccionada || false;
             const v2Estado = dataVisitas.find(v => v.nombre_visita === 'Visita 2')?.seleccionada || false;
             estados[p.idPaciente] = { v1: v1Estado, v2: v2Estado };
@@ -49,7 +55,6 @@ const VistaPacientes = () => {
     fetchPacientes();
   }, []);
 
-  // Función para togglear checkbox y enviar POST a backend
   const toggleCheckbox = async (id, key) => {
     const nuevoEstado = !checkboxStates[id]?.[key];
     setCheckboxStates(prev => ({
@@ -60,7 +65,6 @@ const VistaPacientes = () => {
       },
     }));
 
-    // Nombre de la visita según key
     const nombreVisita = key === 'v1' ? 'Visita 1' : 'Visita 2';
 
     try {
@@ -112,13 +116,11 @@ const VistaPacientes = () => {
     }
   };
 
-  // Función para formatear ID combinando idProtocolo, idPaciente e iniciales
   const formatID = (idProtocolo, idPaciente, iniciales) => {
     const numPart = String(idPaciente).padStart(3, '0');
     return `${idProtocolo}${numPart}${iniciales}`;
   };
 
-  // Filtrar pacientes según búsqueda (buscando en idProtocolo, idPaciente, iniciales)
   const pacientesFiltrados = pacientes.filter(paciente => {
     const idCompleto = `${paciente.idProtocolo}${paciente.idPaciente}${paciente.iniciales}`.toLowerCase();
     return idCompleto.includes(searchTerm.toLowerCase());
@@ -148,8 +150,6 @@ const VistaPacientes = () => {
         <div className="titulo-barra">Tabla de Sujetos</div>
         <div className="barra-grupo">
           <div className="opciones">
-
-            {/* Barra de búsqueda dentro del mismo contenedor de opciones */}
             <input
               type="text"
               placeholder="Buscar pacientes..."
@@ -158,16 +158,8 @@ const VistaPacientes = () => {
                 setSearchTerm(e.target.value);
                 setCurrentPage(1);
               }}
-              className="input-busqueda" // Usa el estilo adecuado según tu CSS para inputs o define uno nuevo
-              style={{
-                marginRight: '10px',
-                padding: '5px 10px',
-                borderRadius: '4px',
-                border: '1px solid #ccc',
-                height: '34px',
-              }}
+              className="input-busqueda"
             />
-
             <select onChange={handleRowsChange} value={rowsPerPage}>
               <option value="5">5</option>
               <option value="10">10</option>

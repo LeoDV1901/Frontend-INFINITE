@@ -38,6 +38,7 @@ const links = {
   },
 };
 
+
 const TablaProcedimientos = () => {
   const { idPaciente } = useParams();
   const navigate = useNavigate();
@@ -52,8 +53,17 @@ const TablaProcedimientos = () => {
     Estudios: 'green',  // Inicialmente verde
   });
 
- useEffect(() => {
-  if (!idPaciente) return;
+   useEffect(() => {
+    // Verificación de token
+    const token = localStorage.getItem('token');  // Obtenemos el token
+    if (!token) {
+      // Si no hay token, redirigimos al login
+      navigate('/Login');
+      return;
+    }
+
+    if (!idPaciente) return;
+
 
   const fetchConsentimiento = async () => {
     try {
