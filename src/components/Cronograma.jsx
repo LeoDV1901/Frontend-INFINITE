@@ -17,8 +17,8 @@ const visitas = ["Visita 0", "Visita 1", "Visita 2", "Visita 3"];
 
 const links = {
   "Firma de consentimiento Informado": { "Visita 0": "/ConcentimientoInformado" },
-  "Criterios de Inclusión": { "Visita 0": "/CriteriosI" },
-  "Criterios de Exclusión": { "Visita 0": "/CriteriosE" },
+  "Criterios de Inclusión": { "Visita 0": "/CriteriosE" },
+  "Criterios de Exclusión": { "Visita 0": "/CriteriosI" },
   "Historia Clínica": { "Visita 0": "/HistoriaClinica" },
   "Signos Vitales": { "Visita 0": "/Signos_Vitales" },
   "Medicamentos Concomitantes": { "Visita 0": "/MedicamentosConcomitantes" },
