@@ -247,7 +247,6 @@ const EliminacionFormularioEvaluacionI = () => {
               <button type="button" onClick={bloquearFormulario}>Bloquear</button>
             )}
             <button type="submit" disabled={bloqueado}>{editId ? 'Actualizar' : 'Enviar'}</button>
-            <button type="button" onClick={handleNext}>Siguiente</button>
           </div>
         </form>
       </div>
