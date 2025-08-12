@@ -230,7 +230,6 @@ const EvolucionCriteriosExclusion = () => {
                 Bloquear Formulario
               </button>
             )}
-           <button type="button" onClick={handleNext}>Siguiente</button>
             {bloqueado && (
               <button type="button" className="btn btn-warning" onClick={desbloquearFormulario}>
                 Desbloquear Formulario

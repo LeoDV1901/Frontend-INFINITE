@@ -8,46 +8,28 @@ const Login = () => {
   const [password, setPassword] = useState('Admin123');
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
 
-    try {
-      const response = await fetch('https://api.weareinfinite.mx/admin/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
+    // Comprobamos si las credenciales son correctas
+    if (email === 'admin@infinite.com.mx' && password === 'Admin123') {
+      // Simulamos un inicio de sesión exitoso
+      localStorage.setItem('token', 'fake_token'); // Almacenamos un token ficticio
+
+      Swal.fire({
+        icon: 'success',
+        title: '¡Bienvenido!',
+        text: 'Inicio de sesión exitoso',
+        showConfirmButton: false,
+        timer: 1500,
+      }).then(() => {
+        navigate('/Index');
       });
-
-      const data = await response.json();
-
-      if (response.ok && data.access_token) {
-        // Guardamos el token en localStorage
-        localStorage.setItem('token', data.access_token);
-
-        Swal.fire({
-          icon: 'success',
-          title: '¡Bienvenido!',
-          text: 'Inicio de sesión exitoso',
-          showConfirmButton: false,
-          timer: 1500,
-        }).then(() => {
-          navigate('/Index');
-        });
-      } else {
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: data.mensaje || 'Correo o contraseña incorrectos',
-        });
-      }
-    } catch (error) {
-      console.error('Error de red:', error);
+    } else {
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: 'No se pudo conectar al servidor',
+        text: 'Correo o contraseña incorrectos',
       });
     }
   };

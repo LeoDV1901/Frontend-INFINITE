@@ -18,12 +18,11 @@ const HistoriaClinica = () => {
     "Dolor que limita las actividades diarias/laborales"
   ];
 
- const patologicosItems = [
+  const patologicosItems = [
     "Diabetes Mellitus", "Hipertensión Arterial", "Dislipidemias", "Sobrepeso",
     "Obesidad", "Alérgicos", "Quirúrgicos", "Otro"
   ];
 
-  // Estados
   const [heredoData, setHeredoData] = useState([]);
   const [noPatologicosData, setNoPatologicosData] = useState([]);
   const [selectedPatologias, setSelectedPatologias] = useState([]);
@@ -37,111 +36,96 @@ const HistoriaClinica = () => {
   useEffect(() => {
     const bloqueoGuardado = localStorage.getItem(BLOQUEO_KEY);
     if (bloqueoGuardado === 'true') setBloqueado(true);
-
     if (!idPaciente) return;
 
-  fetch(`https://api.weareinfinite.mx/form/historia_clinicaV/${idPaciente}`)
-    .then(res => {
-      if (!res.ok) throw new Error('Error al obtener historia clínica');
-      return res.json();
-    })
-    .then(data => {
-      if (Array.isArray(data) && data.length > 0) {
-        const historia = data[0]; // tomar la primera historia
+    fetch(`https://api.weareinfinite.mx/form/historia_clinicaV/${idPaciente}`)
+      .then(res => {
+        if (!res.ok) throw new Error('Error al obtener historia clínica');
+        return res.json();
+      })
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          const historia = data[0];
+          setRegistroExistente(true);
 
-        setRegistroExistente(true);
+          const heredo = heredoItems.map((item, i) =>
+            historia.heredo_familiares?.[i] || {
+              no: false, si: false, familiar: '', enfermedad: item, fecha_inicio: '', fallecido_si: false, fallecido_no: false
+            }
+          );
+          setHeredoData(heredo);
 
-        const heredo = heredoItems.map((_, i) =>
-          historia.heredo_familiares?.[i] || {
-            no: false, si: false, familiar: '', año_inicio: '', fallecido_si: false, fallecido_no: false
-          }
-        );
-        setHeredoData(heredo);
+          const noPat = noPatologicosItems.map((item, i) =>
+            historia.no_patologicos?.[i] || {
+              no: false, si: false, sustancia: item, fecha_inicio: '', continua: false, fecha_fin: '',
+              copas_semana: '', cigarrillos_semana: '', consumo_semana: ''
+            }
+          );
+          setNoPatologicosData(noPat);
 
-        const noPat = noPatologicosItems.map((_, i) =>
-          historia.no_patologicos?.[i] || {
-            no: false, si: false, año_inicio: '', continua: false, año_fin: '',
-            copas_semana: '', cigarrillos_semana: '', consumo_semana: ''
-          }
-        );
-        setNoPatologicosData(noPat);
+          const padecimientos = padecimientosItems.map((_, i) =>
+            historia.padecimientos?.[i] || {
+              si: false, no: false, fecha_inicio: '', continua_si: false
+            }
+          );
+          setPadecimientosData(padecimientos);
 
-        const padecimientos = padecimientosItems.map((_, i) =>
-          historia.padecimientos?.[i] || {
-            si: false, no: false, dia_inicio: '', mes_inicio: '', año_inicio: '', continua_si: false
-          }
-        );
-        setPadecimientosData(padecimientos);
+          const patologicos = historia.patologicos || [];
+          setSelectedPatologias(patologicos.map(p => p.patologia));
 
-        const patologicos = historia.patologicos || [];
-        setSelectedPatologias(patologicos.map(p => p.patologia));
-
-        const detalles = {};
-        patologicos.forEach(p => {
-          detalles[p.patologia] = p.detalles || {
-            dia: '', mes: '', año: '',
-            continuaSi: false, continuaNo: false,
-            resueltoDia: '', resueltoMes: '', resueltoAño: '',
-            manejoFarmacologico: ''
-          };
-        });
-        setPatologicosData(detalles);
-      } else {
+          const detalles = {};
+          patologicos.forEach(p => {
+            detalles[p.patologia] = p.detalles || {
+              fecha_inicio: '', continuaSi: false, continuaNo: false,
+              resueltoFecha: '', manejoFarmacologico: ''
+            };
+          });
+          setPatologicosData(detalles);
+        } else {
+          setRegistroExistente(false);
+        }
+      })
+      .catch((error) => {
+        console.error("Error cargando datos de historia clínica:", error);
         setRegistroExistente(false);
-      }
-    })
-    .catch((error) => {
-      console.error("Error cargando datos de historia clínica:", error);
-      setRegistroExistente(false);
-    });
-}, [idPaciente]);
+      });
+  }, [idPaciente]);
 
-
-  // Heredo familiares
   const handleHeredoChange = (index, field, value) => {
     const newData = [...heredoData];
     newData[index] = { ...newData[index], [field]: value };
     setHeredoData(newData);
   };
 
-  // No patologicos
   const handleNoPatologicosChange = (index, field, value) => {
     const newData = [...noPatologicosData];
     newData[index] = { ...newData[index], [field]: value };
     setNoPatologicosData(newData);
   };
 
-  // Patologias (selección)
   const handlePatologiaChange = (e) => {
     const { value, checked } = e.target;
     let newSelected;
     if (checked) {
       newSelected = [...selectedPatologias, value];
-      // Si no tiene detalles crear objeto vacío
       if (!patologicosData[value]) {
-        setPatologicosData(prev => ({ ...prev, [value]: {
-          dia: "",
-          mes: "",
-          año: "",
-          continuaSi: false,
-          continuaNo: false,
-          resueltoDia: "",
-          resueltoMes: "",
-          resueltoAño: "",
-          manejoFarmacologico: ""
-        }}));
+        setPatologicosData(prev => ({
+          ...prev,
+          [value]: {
+            fecha_inicio: '', continuaSi: false, continuaNo: false,
+            resueltoFecha: '', manejoFarmacologico: ''
+          }
+        }));
       }
     } else {
       newSelected = selectedPatologias.filter(p => p !== value);
-      // Quitar detalles también
-      const newDetalles = {...patologicosData};
+      const newDetalles = { ...patologicosData };
       delete newDetalles[value];
       setPatologicosData(newDetalles);
     }
     setSelectedPatologias(newSelected);
   };
 
-  // Detalles patologias
   const handleDetallePatologiaChange = (patologia, field, value) => {
     setPatologicosData(prev => ({
       ...prev,
@@ -152,60 +136,56 @@ const HistoriaClinica = () => {
     }));
   };
 
-  // Padecimientos actuales
   const handlePadecimientoChange = (index, field, value) => {
     const newData = [...padecimientosData];
     newData[index] = { ...newData[index], [field]: value };
     setPadecimientosData(newData);
   };
 
-  // Enviar datos a API (guardar/actualizar)
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  const payload = {
-    idPaciente,
-    heredo_familiares: heredoData,
-    no_patologicos: noPatologicosData,
-    patologicos: selectedPatologias.map(p => ({
-      patologia: p,
-      detalles: patologicosData[p] || {}
-    })),
-    padecimientos: padecimientosData
+    const payload = {
+      idPaciente,
+      heredo_familiares: heredoData,
+      no_patologicos: noPatologicosData,
+      patologicos: selectedPatologias.map(p => ({
+        patologia: p,
+        detalles: patologicosData[p] || {}
+      })),
+      padecimientos: padecimientosData
+    };
+
+    try {
+      const response = await fetch(`https://api.weareinfinite.mx/form/historia_clinica/${idPaciente}`, {
+        method: registroExistente ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) throw new Error('Error al guardar los datos');
+
+      Swal.fire({
+        icon: 'success',
+        title: registroExistente ? 'Datos actualizados correctamente' : 'Datos guardados exitosamente',
+        confirmButtonText: 'Aceptar'
+      }).then(() => {
+        navigate(`/cronograma/${idPaciente}`);
+      });
+
+      setRegistroExistente(true);
+
+    } catch (err) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Ocurrió un problema al guardar los datos',
+        confirmButtonText: 'Aceptar'
+      }).then(() => {
+        navigate(`/cronograma/${idPaciente}`);
+      });
+    }
   };
-
-  try {
-    const response = await fetch(`https://api.weareinfinite.mx/form/historia_clinica/${idPaciente}`, {
-      method: registroExistente ? 'PUT' : 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) throw new Error('Error al guardar los datos');
-
-    Swal.fire({
-      icon: 'success',
-      title: registroExistente ? 'Datos actualizados correctamente' : 'Datos guardados exitosamente',
-      confirmButtonText: 'Aceptar'
-    }).then(() => {
-      navigate(`/cronograma/${idPaciente}`);
-    });
-
-    setRegistroExistente(true);
-
-  } catch (err) {
-    Swal.fire({
-      icon: 'error',
-      title: 'Error',
-      text: 'Ocurrió un problema al guardar los datos',
-      confirmButtonText: 'Aceptar'
-    }).then(() => {
-      navigate(`/cronograma/${idPaciente}`);
-    });
-  }
-};
-  // Resto de estados, funciones y lógica de tu componente aquí...
-  // Solo cambiaremos los inputs para que incluyan `disabled={bloqueado}`
 
   const bloquearCampos = () => {
     Swal.fire({
@@ -235,12 +215,6 @@ const handleSubmit = async (e) => {
       title: 'Desbloquear formulario',
       input: 'password',
       inputLabel: 'Introduce la contraseña',
-      inputPlaceholder: 'Contraseña',
-      inputAttributes: {
-        maxlength: 20,
-        autocapitalize: 'off',
-        autocorrect: 'off'
-      },
       showCancelButton: true,
       confirmButtonText: 'Desbloquear'
     }).then((result) => {
@@ -248,184 +222,73 @@ const handleSubmit = async (e) => {
         if (result.value === 'infinite') {
           localStorage.removeItem(BLOQUEO_KEY);
           setBloqueado(false);
-          Swal.fire({
-            icon: 'success',
-            title: 'Desbloqueado',
-            text: 'Puedes editar nuevamente los datos.',
-            timer: 2000,
-            showConfirmButton: false
-          });
+          Swal.fire({ icon: 'success', title: 'Desbloqueado', timer: 2000, showConfirmButton: false });
         } else {
-          Swal.fire({
-            icon: 'error',
-            title: 'Contraseña incorrecta',
-            text: 'No se puede desbloquear el formulario.',
-          });
+          Swal.fire({ icon: 'error', title: 'Contraseña incorrecta' });
         }
       }
     });
   };
 
-
   return (
-  <div className="container">
-    <h3>Antecedentes Heredo Familiares</h3>
-    <table style={{ width: '100%', marginBottom: 20 }} border="1">
-      <thead>
-        <tr>
-          <th>No</th>
-          <th>Sí</th>
-          <th>Familiar</th>
-          <th>Fecha de Inicio</th>
-          <th>Fallecido Sí</th>
-          <th>Fallecido No</th>
-        </tr>
-      </thead>
-      <tbody>
-        {heredoItems.map((item, i) => (
-          <tr key={i}>
-            <td>
-              <input
-                type="checkbox"
-                checked={heredoData[i]?.no || false}
-                onChange={e => handleHeredoChange(i, "no", e.target.checked)}
-                disabled={bloqueado}
-              />
-            </td>
-            <td>
-              <input
-                type="checkbox"
-                checked={heredoData[i]?.si || false}
-                onChange={e => handleHeredoChange(i, "si", e.target.checked)}
-                disabled={bloqueado}
-              />
-            </td>
-            <td>
-              <input
-                type="text"
-                value={heredoData[i]?.familiar || ""}
-                onChange={e => handleHeredoChange(i, "familiar", e.target.value)}
-                disabled={bloqueado}
-              />
-            </td>
-            <td>
-              <input
-                type="date"
-                value={heredoData[i]?.fecha_inicio || ""}
-                onChange={e => handleHeredoChange(i, "fecha_inicio", e.target.value)}
-                disabled={bloqueado}
-              />
-            </td>
-            <td>
-              <input
-                type="checkbox"
-                checked={heredoData[i]?.fallecido_si || false}
-                onChange={e => handleHeredoChange(i, "fallecido_si", e.target.checked)}
-                disabled={bloqueado}
-              />
-            </td>
-            <td>
-              <input
-                type="checkbox"
-                checked={heredoData[i]?.fallecido_no || false}
-                onChange={e => handleHeredoChange(i, "fallecido_no", e.target.checked)}
-                disabled={bloqueado}
-              />
-            </td>
+    <div className="container">
+      <h3>Antecedentes Heredo Familiares</h3>
+      <table border="1" style={{ width: '100%', marginBottom: 20 }}>
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Sí</th>
+            <th>Parentesco</th>
+            <th>Enfermedad</th>
+            <th>Fecha de Inicio</th>
+            <th>Fallecido Sí</th>
+            <th>Fallecido No</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {heredoItems.map((item, i) => (
+            <tr key={i}>
+              <td><input type="checkbox" checked={heredoData[i]?.no || false} onChange={e => handleHeredoChange(i, "no", e.target.checked)} disabled={bloqueado} /></td>
+              <td><input type="checkbox" checked={heredoData[i]?.si || false} onChange={e => handleHeredoChange(i, "si", e.target.checked)} disabled={bloqueado} /></td>
+              <td><input type="text" value={heredoData[i]?.familiar || ""} onChange={e => handleHeredoChange(i, "familiar", e.target.value)} disabled={bloqueado} /></td>
+              <td><input type="text" value={heredoData[i]?.enfermedad || item} onChange={e => handleHeredoChange(i, "enfermedad", e.target.value)} disabled={bloqueado} /></td>
+              <td><input type="date" value={heredoData[i]?.fecha_inicio || ""} onChange={e => handleHeredoChange(i, "fecha_inicio", e.target.value)} disabled={bloqueado} /></td>
+              <td><input type="checkbox" checked={heredoData[i]?.fallecido_si || false} onChange={e => handleHeredoChange(i, "fallecido_si", e.target.checked)} disabled={bloqueado} /></td>
+              <td><input type="checkbox" checked={heredoData[i]?.fallecido_no || false} onChange={e => handleHeredoChange(i, "fallecido_no", e.target.checked)} disabled={bloqueado} /></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
-    <h3>Antecedentes Personales No Patológicos</h3>
-    <table style={{ width: '100%', marginBottom: 20 }} border="1">
-      <thead>
-        <tr>
-          <th>NO</th>
-          <th>SÍ</th>
-          <th>Fecha de Inicio</th>
-          <th>CONTINUA</th>
-          <th>Fecha de Fin</th>
-          <th>Nº DE COPAS POR SEMANA</th>
-          <th>Nº DE CIGARRILLOS POR SEMANA</th>
-          <th>CONSUMO POR SEMANA</th>
-        </tr>
-      </thead>
-      <tbody>
-        {noPatologicosItems.map((item, i) => (
-          <tr key={i}>
-            <td>
-              <input
-                type="checkbox"
-                checked={noPatologicosData[i]?.no || false}
-                onChange={e => handleNoPatologicosChange(i, "no", e.target.checked)}
-                disabled={bloqueado}
-              />
-            </td>
-            <td>
-              <input
-                type="checkbox"
-                checked={noPatologicosData[i]?.si || false}
-                onChange={e => handleNoPatologicosChange(i, "si", e.target.checked)}
-                disabled={bloqueado}
-              />
-            </td>
-            <td>
-              <input
-                type="date"
-                value={noPatologicosData[i]?.fecha_inicio || ""}
-                onChange={e => handleNoPatologicosChange(i, "fecha_inicio", e.target.value)}
-                style={{ width: '100%' }}
-                disabled={bloqueado}
-              />
-            </td>
-            <td>
-              <input
-                type="checkbox"
-                checked={noPatologicosData[i]?.continua || false}
-                onChange={e => handleNoPatologicosChange(i, "continua", e.target.checked)}
-                disabled={bloqueado}
-              />
-            </td>
-            <td>
-              <input
-                type="date"
-                value={noPatologicosData[i]?.fecha_fin || ""}
-                onChange={e => handleNoPatologicosChange(i, "fecha_fin", e.target.value)}
-                style={{ width: '100%' }}
-                disabled={bloqueado}
-              />
-            </td>
-            <td>
-              <input
-                type="text"
-                value={noPatologicosData[i]?.copas_semana || ""}
-                onChange={e => handleNoPatologicosChange(i, "copas_semana", e.target.value)}
-                disabled={bloqueado}
-              />
-            </td>
-            <td>
-              <input
-                type="text"
-                value={noPatologicosData[i]?.cigarrillos_semana || ""}
-                onChange={e => handleNoPatologicosChange(i, "cigarrillos_semana", e.target.value)}
-                disabled={bloqueado}
-              />
-            </td>
-            <td>
-              <input
-                type="text"
-                value={noPatologicosData[i]?.consumo_semana || ""}
-                onChange={e => handleNoPatologicosChange(i, "consumo_semana", e.target.value)}
-                disabled={bloqueado}
-              />
-            </td>
+      <h3>Antecedentes Personales No Patológicos</h3>
+      <table border="1" style={{ width: '100%', marginBottom: 20 }}>
+        <thead>
+          <tr>
+            <th>NO</th>
+            <th>SÍ</th>
+            <th>Sustancia</th>
+            <th>Fecha de Inicio</th>
+            <th>CONTINUA</th>
+            <th>Fecha de Fin</th>
+            <th>Nº DE Consumo por semana</th>
+          
           </tr>
-        ))}
-      </tbody>
-    </table>
-
-    <h3>Antecedentes Personales Patológicos</h3>
+        </thead>
+        <tbody>
+          {noPatologicosItems.map((item, i) => (
+            <tr key={i}>
+              <td><input type="checkbox" checked={noPatologicosData[i]?.no || false} onChange={e => handleNoPatologicosChange(i, "no", e.target.checked)} disabled={bloqueado} /></td>
+              <td><input type="checkbox" checked={noPatologicosData[i]?.si || false} onChange={e => handleNoPatologicosChange(i, "si", e.target.checked)} disabled={bloqueado} /></td>
+              <td><input type="text" value={noPatologicosData[i]?.sustancia || item} onChange={e => handleNoPatologicosChange(i, "sustancia", e.target.value)} disabled={bloqueado} /></td>
+              <td><input type="date" value={noPatologicosData[i]?.fecha_inicio || ""} onChange={e => handleNoPatologicosChange(i, "fecha_inicio", e.target.value)} disabled={bloqueado} /></td>
+              <td><input type="checkbox" checked={noPatologicosData[i]?.continua || false} onChange={e => handleNoPatologicosChange(i, "continua", e.target.checked)} disabled={bloqueado} /></td>
+              <td><input type="date" value={noPatologicosData[i]?.fecha_fin || ""} onChange={e => handleNoPatologicosChange(i, "fecha_fin", e.target.value)} disabled={bloqueado} /></td>
+              <td><input type="text" value={noPatologicosData[i]?.copas_semana || ""} onChange={e => handleNoPatologicosChange(i, "copas_semana", e.target.value)} disabled={bloqueado} /></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <h3>Antecedentes Personales Patológicos</h3>
     <h4>Seleccione las patologías:</h4>
     <div style={{ marginBottom: 20 }}>
       {patologicosItems.map((pat, i) => (
@@ -557,7 +420,7 @@ const handleSubmit = async (e) => {
       </tbody>
     </table>
   
-      <div style={{ marginTop: '1rem', display: 'flex', gap: '10px' }}>
+ <div style={{ marginTop: '1rem', display: 'flex', gap: '10px' }}>
         {!bloqueado && (
           <>
             <button type="submit" onClick={handleSubmit}>Guardar</button>

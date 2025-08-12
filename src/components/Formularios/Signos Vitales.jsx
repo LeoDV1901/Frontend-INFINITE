@@ -108,10 +108,28 @@ const FormularioMedico = () => {
     }
   };
 
+  
   const handleBloquear = () => {
     localStorage.setItem(`formulario_bloqueado_${idPaciente}`, 'true');
     setFormBloqueado(true);
     Swal.fire({ icon: 'info', title: 'Formulario bloqueado' });
+  };
+
+   const isOutOfRange = (value, min, max) => {
+    if (value === '') return false;
+    const num = parseFloat(value);
+    return isNaN(num) || num < min || num > max;
+  };
+
+  const inputStyle = (value, min, max) => ({
+    border: isOutOfRange(value, min, max) ? '2px solid red' : '1px solid #ccc',
+    padding: '5px',
+    borderRadius: '4px',
+  });
+
+  
+  const handleEmbarazoChange = (event) => {
+    setEmbarazo(event.target.value);
   };
 
   const handleDesbloquear = async () => {
@@ -172,50 +190,146 @@ const FormularioMedico = () => {
           </tbody>
         </table>
 
-        <h3>Signos Vitales</h3>
-        <table>
+       <h3>Signos Vitales</h3>
+        <table style={{ width: '100%', marginBottom: '20px' }}>
           <tbody>
             <tr>
               <td>Presión Sistólica</td>
-              <td><input type="text" value={presionSistolica} onChange={(e) => setPresionSistolica(e.target.value)} disabled={formBloqueado} /></td>
+              <td>
+                <input
+                  type="text"
+                  placeholder="mmHg"
+                  value={presionSistolica}
+                  disabled={formBloqueado}
+                  onChange={(e) => setPresionSistolica(e.target.value)}
+                  style={inputStyle(presionSistolica, 90, 120)}
+                />
+              </td>
               <td>Presión Diastólica</td>
-              <td><input type="text" value={presionDiastolica} onChange={(e) => setPresionDiastolica(e.target.value)} disabled={formBloqueado} /></td>
+              <td>
+                <input
+                  type="text"
+                  placeholder="mmHg"
+                  value={presionDiastolica}
+                  disabled={formBloqueado}
+                  onChange={(e) => setPresionDiastolica(e.target.value)}
+                  style={inputStyle(presionDiastolica, 60, 80)}
+                />
+              </td>
             </tr>
             <tr>
               <td>Temperatura</td>
-              <td><input type="text" value={temperatura} onChange={(e) => setTemperatura(e.target.value)} disabled={formBloqueado} /></td>
+              <td>
+                <input
+                  type="text"
+                  placeholder="°C"
+                  value={temperatura}
+                  disabled={formBloqueado}
+                  onChange={(e) => setTemperatura(e.target.value.replace(/[^0-9.]/g, ''))}
+                  style={inputStyle(temperatura, 36.5, 37.9)}
+                />
+              </td>
               <td>Frecuencia Cardiaca</td>
-              <td><input type="text" value={frecuenciaCardiaca} onChange={(e) => setFrecuenciaCardiaca(e.target.value)} disabled={formBloqueado} /></td>
+              <td>
+                <input
+                  type="text"
+                  placeholder="latidos/min"
+                  value={frecuenciaCardiaca}
+                  disabled={formBloqueado}
+                  onChange={(e) => setFrecuenciaCardiaca(e.target.value.replace(/[^0-9.]/g, ''))}
+                  style={inputStyle(frecuenciaCardiaca, 60, 100)}
+                />
+              </td>
             </tr>
             <tr>
               <td>Frecuencia Respiratoria</td>
-              <td><input type="text" value={frecuenciaRespiratoria} onChange={(e) => setFrecuenciaRespiratoria(e.target.value)} disabled={formBloqueado} /></td>
+              <td>
+                <input
+                  type="text"
+                  placeholder="respiraciones/min"
+                  value={frecuenciaRespiratoria}
+                  disabled={formBloqueado}
+                  onChange={(e) => setFrecuenciaRespiratoria(e.target.value)}
+                 style={inputStyle(frecuenciaRespiratoria, 12, 20)}
+                />
+              </td>
               <td>Peso</td>
-              <td><input type="text" value={peso} onChange={(e) => setPeso(e.target.value)} disabled={formBloqueado} /></td>
+              <td>
+                <input
+                  type="text"
+                  placeholder="kg"
+                  value={peso}
+                  disabled={formBloqueado}
+                 onChange={(e) => setPeso(e.target.value.replace(/[^0-9.]/g, ''))}
+                />
+              </td>
             </tr>
             <tr>
               <td>Talla</td>
-              <td><input type="text" value={talla} onChange={(e) => setTalla(e.target.value)} disabled={formBloqueado} /></td>
+              <td>
+                <input
+                  type="text"
+                  placeholder="cm"
+                  value={talla}
+                  disabled={formBloqueado}
+                  onChange={(e) => setTalla(e.target.value.replace(/[^0-9.]/g, ''))}
+                />
+              </td>
               <td>IMC</td>
-              <td><input type="text" value={imc} onChange={(e) => setImc(e.target.value)} disabled readOnly /></td>
+              <td>
+                <input
+                  type="text"
+                  placeholder="kg/m²"
+                  value={imc}
+                  disabled={formBloqueado}
+                  onChange={(e) => setImc(e.target.value.replace(/[^0-9.]/g, ''))}
+                />
+              </td>
             </tr>
             <tr>
               <td>Embarazo</td>
               <td>
-                <label><input type="radio" name="embarazo" value="Si" checked={embarazo === 'Si'} onChange={(e) => setEmbarazo(e.target.value)} disabled={formBloqueado} /> Sí</label>
-                <label><input type="radio" name="embarazo" value="No" checked={embarazo === 'No'} onChange={(e) => setEmbarazo(e.target.value)} disabled={formBloqueado} /> No</label>
+                <label>
+                  <input
+                    type="radio"
+                    name="embarazo"
+                    value="Si"
+                    disabled={formBloqueado}
+                    checked={embarazo === 'Si'}
+                    onChange={handleEmbarazoChange}
+                  />
+                  Sí
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="embarazo"
+                    value="No"
+                    disabled={formBloqueado}
+                    checked={embarazo === 'No'}
+                    onChange={handleEmbarazoChange}
+                  />
+                  No
+                </label>
               </td>
             </tr>
             {embarazo === 'Si' && (
               <tr>
                 <td>Comentario</td>
                 <td colSpan="3">
-                  <textarea value={comentario} onChange={(e) => setComentario(e.target.value)} disabled={formBloqueado} />
+                  <textarea
+                    rows="2"
+                    disabled={formBloqueado}
+                    value={comentario}
+                    onChange={(e) => setComentario(e.target.value)}
+                    style={{ width: '100%', fontSize: '14px', padding: '8px' }}
+                  ></textarea>
                 </td>
               </tr>
             )}
           </tbody>
         </table>
+
 
         <div className="botones-formulario">
           {registroExistente ? (

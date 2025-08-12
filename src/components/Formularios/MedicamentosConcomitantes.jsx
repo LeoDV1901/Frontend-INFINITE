@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import '../css/SignosV.css';
+import './Medicamento.css';
 import { useParams, useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 
 const MedicamentosConcomitantes = () => {
   const { idPaciente } = useParams();
   const navigate = useNavigate();
-  const [registroExistente, setRegistroExistente] = useState(false);
   const [bloqueado, setBloqueado] = useState(false);
+  const [medicamentos, setMedicamentos] = useState([]); // lista de medicamentos existentes
 
   const [consumioMedicamento, setConsumioMedicamento] = useState(null);
   const [iniciales, setIniciales] = useState('');
@@ -26,10 +26,7 @@ const MedicamentosConcomitantes = () => {
     if (!dateStr) return '';
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) return '';
-    const y = date.getFullYear();
-    const m = (date.getMonth() + 1).toString().padStart(2, '0');
-    const d = date.getDate().toString().padStart(2, '0');
-    return `${y}-${m}-${d}`;
+    return date.toISOString().split('T')[0];
   };
 
   useEffect(() => {
@@ -41,56 +38,45 @@ const MedicamentosConcomitantes = () => {
     const fetchPaciente = async () => {
       try {
         const res = await fetch(`https://api.weareinfinite.mx/paciente/view/${idPaciente}`);
-        if (!res.ok) throw new Error('No se pudo obtener los datos del paciente');
         const pacienteData = await res.json();
         setIniciales(pacienteData.iniciales || '');
       } catch (error) {
-        console.error('Error cargando datos del paciente:', error);
+        console.error('Error paciente:', error);
         Swal.fire({
           icon: 'error',
           title: 'Error',
           text: 'No se pudieron cargar los datos del paciente.',
-        }).then(() => {
-          navigate(`/cronograma/${idPaciente}`);
-        });
+        }).then(() => navigate(`/cronograma/${idPaciente}`));
       }
     };
 
-    fetch(`https://api.weareinfinite.mx/form/medicamentos_concomitantes/${idPaciente}`)
-      .then(res => {
-        if (res.status === 404) {
-          setRegistroExistente(false);
-          return null;
+    const fetchMedicamentos = async () => {
+      try {
+        const res = await fetch(`https://api.weareinfinite.mx/form/medicamentos_concomitantes/${idPaciente}`);
+        if (res.ok) {
+          const data = await res.json();
+          // Si el backend devuelve un array, úsalo directamente
+          setMedicamentos(Array.isArray(data) ? data : [data]);
         }
-        return res.json();
-      })
-      .then(data => {
-        if (data) {
-          setRegistroExistente(true);
-          setNumeroAleatorizacion(data.num_aleatorizacion || '');
-          setConsumioMedicamento(data.consumio_medicamento?.toUpperCase() === 'S');
-          setNombreGenerico(data.nombre_medicamento || '');
-          setDosisDiaria(data.dosis_diaria || '');
-          setPresentacion(data.presentacion || '');
-          setIndicacion(data.indicacion || '');
-          setFechaInicio(formatDateForInput(data.fecha_inicio));
-          setFechaTermino(formatDateForInput(data.fecha_termino));
-          setContinuaMedicamento(data.continua_consumo?.toUpperCase() === 'S');
-        }
-      })
-      .catch(err => {
-        console.error('Error al obtener datos:', err);
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'No se pudieron cargar los datos.',
-        }).then(() => {
-          navigate(`/cronograma/${idPaciente}`);
-        });
-      });
+      } catch (error) {
+        console.error('Error medicamentos:', error);
+      }
+    };
 
     fetchPaciente();
+    fetchMedicamentos();
   }, [idPaciente, navigate]);
+
+  const resetFormulario = () => {
+    setConsumioMedicamento(null);
+    setNombreGenerico('');
+    setDosisDiaria('');
+    setPresentacion('');
+    setIndicacion('');
+    setFechaInicio('');
+    setFechaTermino('');
+    setContinuaMedicamento(null);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -110,34 +96,35 @@ const MedicamentosConcomitantes = () => {
     };
 
     try {
-      const response = await fetch(`https://api.weareinfinite.mx/form/medicamentos_concomitantes${registroExistente ? `/${idPaciente}` : ''}`, {
-        method: registroExistente ? 'PUT' : 'POST',
+      const response = await fetch(`https://api.weareinfinite.mx/form/medicamentos_concomitantes`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
 
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.mensaje || 'Error al guardar');
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.mensaje || 'Error al guardar');
+      }
 
       Swal.fire({
         icon: 'success',
-        title: registroExistente ? 'Datos actualizados' : 'Datos guardados',
-        text: registroExistente ? 'Los datos se actualizaron correctamente.' : 'Los datos se guardaron exitosamente.',
+        title: 'Medicamento guardado',
         timer: 2000,
         showConfirmButton: false,
       });
 
-      setTimeout(() => {
-        navigate(`/cronograma/${idPaciente}`);
-      }, 2000);
+      resetFormulario();
+      // Recargar lista de medicamentos
+      const newList = await (await fetch(`https://api.weareinfinite.mx/form/medicamentos_concomitantes/${idPaciente}`)).json();
+      setMedicamentos(Array.isArray(newList) ? newList : [newList]);
+
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error al guardar:', error);
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: 'Ocurrió un error al guardar los datos.',
-      }).then(() => {
-        navigate(`/cronograma/${idPaciente}`);
+        text: 'Ocurrió un error al guardar el medicamento.',
       });
     }
   };
@@ -157,7 +144,7 @@ const MedicamentosConcomitantes = () => {
         Swal.fire({
           icon: 'info',
           title: 'Bloqueado',
-          text: 'Los campos ahora están bloqueados.',
+          text: 'Los campos están bloqueados.',
           timer: 2000,
           showConfirmButton: false
         });
@@ -171,11 +158,6 @@ const MedicamentosConcomitantes = () => {
       input: 'password',
       inputLabel: 'Introduce la contraseña',
       inputPlaceholder: 'Contraseña',
-      inputAttributes: {
-        maxlength: 20,
-        autocapitalize: 'off',
-        autocorrect: 'off'
-      },
       showCancelButton: true,
       confirmButtonText: 'Desbloquear'
     }).then((result) => {
@@ -186,7 +168,7 @@ const MedicamentosConcomitantes = () => {
           Swal.fire({
             icon: 'success',
             title: 'Desbloqueado',
-            text: 'Puedes editar nuevamente los datos.',
+            text: 'Puedes editar nuevamente.',
             timer: 2000,
             showConfirmButton: false
           });
@@ -194,22 +176,67 @@ const MedicamentosConcomitantes = () => {
           Swal.fire({
             icon: 'error',
             title: 'Contraseña incorrecta',
-            text: 'No se puede desbloquear el formulario.',
           });
         }
       }
     });
   };
 
+  const eliminarMedicamento = async (id) => {
+  const confirmar = await Swal.fire({
+    title: '¿Estás seguro?',
+    text: 'Este medicamento será eliminado permanentemente.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#3085d6',
+    confirmButtonText: 'Sí, eliminar',
+    cancelButtonText: 'Cancelar'
+  });
+
+  if (confirmar.isConfirmed) {
+    try {
+      const response = await fetch(`https://api.weareinfinite.mx/form/medicamentos_concomitantes/delete/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al eliminar el medicamento');
+      }
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Eliminado',
+        text: 'El medicamento fue eliminado correctamente.',
+        timer: 2000,
+        showConfirmButton: false
+      });
+
+      // Recargar lista de medicamentos
+      const newList = await (await fetch(`https://api.weareinfinite.mx/form/medicamentos_concomitantes/${idPaciente}`)).json();
+      setMedicamentos(Array.isArray(newList) ? newList : [newList]);
+
+    } catch (error) {
+      console.error('Error al eliminar:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se pudo eliminar el medicamento.',
+      });
+    }
+  }
+};
+
   return (
     <div className="container">
       <h2>MEDICAMENTOS CONCOMITANTES</h2>
+
       <form onSubmit={handleSubmit}>
         <table>
           <tbody>
             <tr>
               <td><label>Iniciales:</label></td>
-              <td><input type="text" value={iniciales} disabled={bloqueado} onChange={(e) => setIniciales(e.target.value)} /></td>
+              <td><input type="text" value={iniciales} disabled={true} /></td>
             </tr>
             <tr>
               <td><label>No. De Aleatorización:</label></td>
@@ -241,6 +268,7 @@ const MedicamentosConcomitantes = () => {
                   <td><label>Presentación:</label></td>
                   <td><input type="text" value={presentacion} disabled={bloqueado} onChange={(e) => setPresentacion(e.target.value)} /></td>
                 </tr>
+               
                 <tr>
                   <td><label>Indicación:</label></td>
                   <td><input type="text" value={indicacion} disabled={bloqueado} onChange={(e) => setIndicacion(e.target.value)} /></td>
@@ -270,13 +298,59 @@ const MedicamentosConcomitantes = () => {
         </table>
 
         <div style={{ display: 'flex', gap: '10px', marginTop: '1rem' }}>
-          {!bloqueado && <button type="submit">{registroExistente ? 'Actualizar' : 'Guardar'}</button>}
+          {!bloqueado && <button type="submit">Agregar Medicamento</button>}
           {!bloqueado && <button type="button" onClick={bloquearCampos}>Bloquear</button>}
           {bloqueado && <button type="button" onClick={desbloquearCampos}>Desbloquear</button>}
+          <button type="button" onClick={() => navigate(`/cronograma/${idPaciente}`)}>Regresar</button>
         </div>
       </form>
+
+      {/* Tabla de medicamentos ya registrados */}
+{medicamentos.length > 0 && (
+  <form style={{ marginTop: '2rem' }}>
+    <h3>Medicamentos registrados:</h3>
+    <div className="tabla-container">
+      <table className="eventos-table">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Dosis</th>
+            <th>Presentación</th>
+            <th>Indicación</th>
+            <th>Inicio</th>
+            <th>Término</th>
+            <th>¿Continúa?</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {medicamentos.map((med) => (
+            <tr key={med.id}>
+              <td>{med.nombre_medicamento}</td>
+              <td>{med.dosis_diaria}</td>
+              <td>{med.presentacion}</td>
+              <td>{med.indicacion}</td>
+              <td>{formatDateForInput(med.fecha_inicio)}</td>
+              <td>{formatDateForInput(med.fecha_termino)}</td>
+              <td>{med.continua_consumo === 'S' ? 'Sí' : 'No'}</td>
+              <td>
+                <button
+                  type="button"
+                  onClick={() => eliminarMedicamento(med.id)}
+                >
+                  Eliminar
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
-  );
+  </form>
+)}
+      
+    </div>
+  );  
 };
 
 export default MedicamentosConcomitantes;
