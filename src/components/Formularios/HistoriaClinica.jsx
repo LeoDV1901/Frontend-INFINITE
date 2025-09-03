@@ -6,8 +6,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 const HistoriaClinica = () => {
   const { idPaciente } = useParams();
   const navigate = useNavigate();
-  const heredoItems = ["Diabetes Mellitus", "Hipertensión Arterial", "Cardiopatías", "Cáncer", "Otra"];
-  const noPatologicosItems = ["ALCOHOL", "TABACO", "MARIHUANA", "COCAÍNA", "HEROINA", "CRISTAL/PIEDRA"];
+
+  const heredoItems = ["", "", "", "", ""];
+  const noPatologicosItems = ["", "", "", "", "", ""];
   const padecimientosItems = [
     "Dolor de espalda baja",
     "Dolor sordo",
@@ -17,10 +18,15 @@ const HistoriaClinica = () => {
     "Dolor que limita los movimientos",
     "Dolor que limita las actividades diarias/laborales"
   ];
-
   const patologicosItems = [
-    "Diabetes Mellitus", "Hipertensión Arterial", "Dislipidemias", "Sobrepeso",
-    "Obesidad", "Alérgicos", "Quirúrgicos", "Otro"
+    "Diabetes Mellitus",
+    "Hipertensión Arterial",
+    "Dislipidemias",
+    "Sobrepeso",
+    "Obesidad",
+    "Alérgicos",
+    "Quirúrgicos",
+    "Otro"
   ];
 
   const [heredoData, setHeredoData] = useState([]);
@@ -36,6 +42,7 @@ const HistoriaClinica = () => {
   useEffect(() => {
     const bloqueoGuardado = localStorage.getItem(BLOQUEO_KEY);
     if (bloqueoGuardado === 'true') setBloqueado(true);
+
     if (!idPaciente) return;
 
     fetch(`https://api.weareinfinite.mx/form/historia_clinicaV/${idPaciente}`)
@@ -50,14 +57,16 @@ const HistoriaClinica = () => {
 
           const heredo = heredoItems.map((item, i) =>
             historia.heredo_familiares?.[i] || {
-              no: false, si: false, familiar: '', enfermedad: item, fecha_inicio: '', fallecido_si: false, fallecido_no: false
+              no: false, si: false, familiar: '', enfermedad: item,
+              fecha_inicio: '', fallecido_si: false, fallecido_no: false
             }
           );
           setHeredoData(heredo);
 
           const noPat = noPatologicosItems.map((item, i) =>
             historia.no_patologicos?.[i] || {
-              no: false, si: false, sustancia: item, fecha_inicio: '', continua: false, fecha_fin: '',
+              no: false, si: false, sustancia: item,
+              fecha_inicio: '', continua: false, fecha_fin: '',
               copas_semana: '', cigarrillos_semana: '', consumo_semana: ''
             }
           );
@@ -76,11 +85,12 @@ const HistoriaClinica = () => {
           const detalles = {};
           patologicos.forEach(p => {
             detalles[p.patologia] = p.detalles || {
-              fecha_inicio: '', continuaSi: false, continuaNo: false,
-              resueltoFecha: '', manejoFarmacologico: ''
+              fecha_inicio: '', continuaSi: false,
+              continuaNo: false, resueltoFecha: '', manejoFarmacologico: ''
             };
           });
           setPatologicosData(detalles);
+
         } else {
           setRegistroExistente(false);
         }
@@ -91,18 +101,25 @@ const HistoriaClinica = () => {
       });
   }, [idPaciente]);
 
+  // 🔹 Heredo familiares
   const handleHeredoChange = (index, field, value) => {
     const newData = [...heredoData];
     newData[index] = { ...newData[index], [field]: value };
+    if (field === "no" && value) newData[index].si = false;
+    if (field === "si" && value) newData[index].no = false;
     setHeredoData(newData);
   };
 
+  // 🔹 No patológicos
   const handleNoPatologicosChange = (index, field, value) => {
     const newData = [...noPatologicosData];
     newData[index] = { ...newData[index], [field]: value };
+    if (field === "no" && value) newData[index].si = false;
+    if (field === "si" && value) newData[index].no = false;
     setNoPatologicosData(newData);
   };
 
+  // 🔹 Patológicos
   const handlePatologiaChange = (e) => {
     const { value, checked } = e.target;
     let newSelected;
@@ -112,8 +129,11 @@ const HistoriaClinica = () => {
         setPatologicosData(prev => ({
           ...prev,
           [value]: {
-            fecha_inicio: '', continuaSi: false, continuaNo: false,
-            resueltoFecha: '', manejoFarmacologico: ''
+            fecha_inicio: '',
+            continuaSi: false,
+            continuaNo: false,
+            resueltoFecha: '',
+            manejoFarmacologico: ''
           }
         }));
       }
@@ -129,22 +149,22 @@ const HistoriaClinica = () => {
   const handleDetallePatologiaChange = (patologia, field, value) => {
     setPatologicosData(prev => ({
       ...prev,
-      [patologia]: {
-        ...prev[patologia],
-        [field]: value
-      }
+      [patologia]: { ...prev[patologia], [field]: value }
     }));
   };
 
+  // 🔹 Padecimientos (bloquea fila si se selecciona NO)
   const handlePadecimientoChange = (index, field, value) => {
     const newData = [...padecimientosData];
     newData[index] = { ...newData[index], [field]: value };
+    if (field === "no" && value) newData[index].si = false;
+    if (field === "si" && value) newData[index].no = false;
     setPadecimientosData(newData);
   };
 
+  // 🔹 Guardar
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     const payload = {
       idPaciente,
       heredo_familiares: heredoData,
@@ -155,16 +175,13 @@ const HistoriaClinica = () => {
       })),
       padecimientos: padecimientosData
     };
-
     try {
       const response = await fetch(`https://api.weareinfinite.mx/form/historia_clinica/${idPaciente}`, {
         method: registroExistente ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-
       if (!response.ok) throw new Error('Error al guardar los datos');
-
       Swal.fire({
         icon: 'success',
         title: registroExistente ? 'Datos actualizados correctamente' : 'Datos guardados exitosamente',
@@ -172,21 +189,18 @@ const HistoriaClinica = () => {
       }).then(() => {
         navigate(`/cronograma/${idPaciente}`);
       });
-
       setRegistroExistente(true);
-
     } catch (err) {
       Swal.fire({
         icon: 'error',
         title: 'Error',
         text: 'Ocurrió un problema al guardar los datos',
         confirmButtonText: 'Aceptar'
-      }).then(() => {
-        navigate(`/cronograma/${idPaciente}`);
       });
     }
   };
 
+  // 🔹 Bloqueo
   const bloquearCampos = () => {
     Swal.fire({
       title: '¿Estás seguro?',
@@ -199,13 +213,6 @@ const HistoriaClinica = () => {
       if (result.isConfirmed) {
         localStorage.setItem(BLOQUEO_KEY, 'true');
         setBloqueado(true);
-        Swal.fire({
-          icon: 'info',
-          title: 'Bloqueado',
-          text: 'Los campos ahora están bloqueados.',
-          timer: 2000,
-          showConfirmButton: false
-        });
       }
     });
   };
@@ -222,7 +229,6 @@ const HistoriaClinica = () => {
         if (result.value === 'infinite') {
           localStorage.removeItem(BLOQUEO_KEY);
           setBloqueado(false);
-          Swal.fire({ icon: 'success', title: 'Desbloqueado', timer: 2000, showConfirmButton: false });
         } else {
           Swal.fire({ icon: 'error', title: 'Contraseña incorrecta' });
         }
@@ -232,205 +238,230 @@ const HistoriaClinica = () => {
 
   return (
     <div className="container">
+      {/* 🔹 Heredo familiares */}
       <h3>Antecedentes Heredo Familiares</h3>
       <table border="1" style={{ width: '100%', marginBottom: 20 }}>
         <thead>
           <tr>
-            <th>No</th>
-            <th>Sí</th>
-            <th>Parentesco</th>
-            <th>Enfermedad</th>
-            <th>Fecha de Inicio</th>
-            <th>Fallecido Sí</th>
-            <th>Fallecido No</th>
+            <th>No</th><th>Sí</th><th>Parentesco</th><th>Enfermedad</th>
+            <th>Fecha de Inicio</th><th>Fallecido Sí</th><th>Fallecido No</th>
           </tr>
         </thead>
         <tbody>
-          {heredoItems.map((item, i) => (
-            <tr key={i}>
-              <td><input type="checkbox" checked={heredoData[i]?.no || false} onChange={e => handleHeredoChange(i, "no", e.target.checked)} disabled={bloqueado} /></td>
-              <td><input type="checkbox" checked={heredoData[i]?.si || false} onChange={e => handleHeredoChange(i, "si", e.target.checked)} disabled={bloqueado} /></td>
-              <td><input type="text" value={heredoData[i]?.familiar || ""} onChange={e => handleHeredoChange(i, "familiar", e.target.value)} disabled={bloqueado} /></td>
-              <td><input type="text" value={heredoData[i]?.enfermedad || item} onChange={e => handleHeredoChange(i, "enfermedad", e.target.value)} disabled={bloqueado} /></td>
-              <td><input type="date" value={heredoData[i]?.fecha_inicio || ""} onChange={e => handleHeredoChange(i, "fecha_inicio", e.target.value)} disabled={bloqueado} /></td>
-              <td><input type="checkbox" checked={heredoData[i]?.fallecido_si || false} onChange={e => handleHeredoChange(i, "fallecido_si", e.target.checked)} disabled={bloqueado} /></td>
-              <td><input type="checkbox" checked={heredoData[i]?.fallecido_no || false} onChange={e => handleHeredoChange(i, "fallecido_no", e.target.checked)} disabled={bloqueado} /></td>
-            </tr>
-          ))}
+          {heredoItems.map((item, i) => {
+            const fila = heredoData[i] || {};
+            const filaBloqueada = fila.no;
+            return (
+              <tr key={i}>
+                <td><input type="checkbox" checked={fila.no || false}
+                  onChange={e => handleHeredoChange(i, "no", e.target.checked)}
+                  disabled={bloqueado} /></td>
+                <td><input type="checkbox" checked={fila.si || false}
+                  onChange={e => handleHeredoChange(i, "si", e.target.checked)}
+                  disabled={bloqueado} /></td>
+                <td><input type="text" value={fila.familiar || ""}
+                  onChange={e => handleHeredoChange(i, "familiar", e.target.value)}
+                  disabled={bloqueado || filaBloqueada} /></td>
+                <td><input type="text" value={fila.enfermedad || ""}
+                  onChange={e => handleHeredoChange(i, "enfermedad", e.target.value)}
+                  disabled={bloqueado || filaBloqueada} /></td>
+                <td><input type="date" value={fila.fecha_inicio || ""}
+                  onChange={e => handleHeredoChange(i, "fecha_inicio", e.target.value)}
+                  disabled={bloqueado || filaBloqueada} /></td>
+                <td><input type="checkbox" checked={fila.fallecido_si || false}
+                  onChange={e => handleHeredoChange(i, "fallecido_si", e.target.checked)}
+                  disabled={bloqueado || filaBloqueada} /></td>
+                <td><input type="checkbox" checked={fila.fallecido_no || false}
+                  onChange={e => handleHeredoChange(i, "fallecido_no", e.target.checked)}
+                  disabled={bloqueado || filaBloqueada} /></td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
 
+      {/* 🔹 No patológicos */}
       <h3>Antecedentes Personales No Patológicos</h3>
       <table border="1" style={{ width: '100%', marginBottom: 20 }}>
         <thead>
           <tr>
-            <th>NO</th>
-            <th>SÍ</th>
-            <th>Sustancia</th>
-            <th>Fecha de Inicio</th>
-            <th>CONTINUA</th>
-            <th>Fecha de Fin</th>
-            <th>Nº DE Consumo por semana</th>
-          
+            <th>No</th><th>Sí</th><th>Sustancia</th><th>Fecha de Inicio</th>
+            <th>Continua</th><th>Fecha de Fin</th><th>Consumo/Semana</th>
           </tr>
         </thead>
         <tbody>
-          {noPatologicosItems.map((item, i) => (
-            <tr key={i}>
-              <td><input type="checkbox" checked={noPatologicosData[i]?.no || false} onChange={e => handleNoPatologicosChange(i, "no", e.target.checked)} disabled={bloqueado} /></td>
-              <td><input type="checkbox" checked={noPatologicosData[i]?.si || false} onChange={e => handleNoPatologicosChange(i, "si", e.target.checked)} disabled={bloqueado} /></td>
-              <td><input type="text" value={noPatologicosData[i]?.sustancia || item} onChange={e => handleNoPatologicosChange(i, "sustancia", e.target.value)} disabled={bloqueado} /></td>
-              <td><input type="date" value={noPatologicosData[i]?.fecha_inicio || ""} onChange={e => handleNoPatologicosChange(i, "fecha_inicio", e.target.value)} disabled={bloqueado} /></td>
-              <td><input type="checkbox" checked={noPatologicosData[i]?.continua || false} onChange={e => handleNoPatologicosChange(i, "continua", e.target.checked)} disabled={bloqueado} /></td>
-              <td><input type="date" value={noPatologicosData[i]?.fecha_fin || ""} onChange={e => handleNoPatologicosChange(i, "fecha_fin", e.target.value)} disabled={bloqueado} /></td>
-              <td><input type="text" value={noPatologicosData[i]?.copas_semana || ""} onChange={e => handleNoPatologicosChange(i, "copas_semana", e.target.value)} disabled={bloqueado} /></td>
-            </tr>
-          ))}
+          {noPatologicosItems.map((item, i) => {
+            const fila = noPatologicosData[i] || {};
+            const filaBloqueada = fila.no;
+            return (
+              <tr key={i}>
+                <td><input type="checkbox" checked={fila.no || false}
+                  onChange={e => handleNoPatologicosChange(i, "no", e.target.checked)}
+                  disabled={bloqueado} /></td>
+                <td><input type="checkbox" checked={fila.si || false}
+                  onChange={e => handleNoPatologicosChange(i, "si", e.target.checked)}
+                  disabled={bloqueado} /></td>
+                <td><input type="text" value={fila.sustancia || ""}
+                  onChange={e => handleNoPatologicosChange(i, "sustancia", e.target.value)}
+                  disabled={bloqueado || filaBloqueada} /></td>
+                <td><input type="date" value={fila.fecha_inicio || ""}
+                  onChange={e => handleNoPatologicosChange(i, "fecha_inicio", e.target.value)}
+                  disabled={bloqueado || filaBloqueada} /></td>
+                <td><input type="checkbox" checked={fila.continua || false}
+                  onChange={e => handleNoPatologicosChange(i, "continua", e.target.checked)}
+                  disabled={bloqueado || filaBloqueada} /></td>
+                <td><input type="date" value={fila.fecha_fin || ""}
+                  onChange={e => handleNoPatologicosChange(i, "fecha_fin", e.target.value)}
+                  disabled={bloqueado || filaBloqueada} /></td>
+                <td><input type="text" value={fila.copas_semana || ""}
+                  onChange={e => handleNoPatologicosChange(i, "copas_semana", e.target.value)}
+                  disabled={bloqueado || filaBloqueada} /></td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
-      <h3>Antecedentes Personales Patológicos</h3>
-    <h4>Seleccione las patologías:</h4>
-    <div style={{ marginBottom: 20 }}>
-      {patologicosItems.map((pat, i) => (
-        <label key={i} style={{ display: 'block' }}>
-          <input
-            type="checkbox"
-            value={pat}
-            checked={selectedPatologias.includes(pat)}
-            onChange={handlePatologiaChange}
-            disabled={bloqueado}
-          />
-          {pat}
-        </label>
-      ))}
-    </div>
 
-    {selectedPatologias.map((patologia) => (
-      <div key={patologia} style={{ marginBottom: 20 }}>
-        <h5>Detalles de: {patologia}</h5>
-        <table style={{ width: '100%' }} border="1">
-          <thead>
-            <tr>
-              <th>Fecha de Inicio</th>
-              <th>Continua</th>
-              <th>Fecha Resuelto</th>
-              <th>Manejo Farmacológico</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>
-                <input
-                  type="date"
-                  value={patologicosData[patologia]?.fecha_inicio || ''}
-                  onChange={e => handleDetallePatologiaChange(patologia, 'fecha_inicio', e.target.value)}
-                  disabled={bloqueado}
-                />
-              </td>
-              <td>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={patologicosData[patologia]?.continuaSi || false}
-                    onChange={e => handleDetallePatologiaChange(patologia, 'continuaSi', e.target.checked)}
-                    disabled={bloqueado}
-                  /> Sí
-                </label>
-                <label style={{ marginLeft: 10 }}>
-                  <input
-                    type="checkbox"
-                    checked={patologicosData[patologia]?.continuaNo || false}
-                    onChange={e => handleDetallePatologiaChange(patologia, 'continuaNo', e.target.checked)}
-                    disabled={bloqueado}
-                  /> No
-                </label>
-              </td>
-              <td>
-                <input
-                  type="date"
-                  value={patologicosData[patologia]?.resueltoFecha || ''}
-                  onChange={e => handleDetallePatologiaChange(patologia, 'resueltoFecha', e.target.value)}
-                  disabled={bloqueado}
-                />
-              </td>
-              <td>
-                <input
-                  type="text"
-                  value={patologicosData[patologia]?.manejoFarmacologico || ''}
-                  onChange={e => handleDetallePatologiaChange(patologia, 'manejoFarmacologico', e.target.value)}
-                  placeholder="Medicamento"
-                  disabled={bloqueado}
-                />
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    ))}
+      {/* 🔹 Patológicos */}
+   <h3>Antecedentes Personales Patológicos</h3>
+<div style={{ marginBottom: 20 }}>
+  {patologicosItems.map((pat, i) => (
+    <label key={i} style={{ display: 'block' }}>
+      <input type="checkbox" value={pat}
+        checked={selectedPatologias.includes(pat)}
+        onChange={handlePatologiaChange}
+        disabled={bloqueado} /> {pat}
+    </label>
+  ))}
+</div>
+{selectedPatologias.map((patologia) => {
+  const detalles = patologicosData[patologia] || {};
+  const bloquearFecha = detalles.continuaSi;
+  
+  // Determinar si se debe bloquear el calendario de "Fecha Resuelto"
+  const bloquearFechaResuelto = detalles.continuaSi;
 
-    <h3>Padecimiento Actual</h3>
-    <table style={{ width: '100%', marginBottom: 20 }} border="1">
-      <thead>
-        <tr>
-          <th>Padecimiento</th>
-          <th>Sí</th>
-          <th>No</th>
-          <th>Fecha de Inicio</th>
-          <th>Continua Sí</th>
-        </tr>
-      </thead>
-      <tbody>
-        {padecimientosItems.map((pad, i) => (
-          <tr key={i}>
-            <td>{pad}</td>
+  return (
+    <div key={patologia} style={{ marginBottom: 20 }}>
+      <h5>Detalles de: {patologia}</h5>
+      <table border="1" style={{ width: '100%' }}>
+        <thead>
+          <tr>
+            <th>Fecha Inicio</th><th>Continua</th>
+            <th>Fecha Resuelto</th><th>Manejo Farmacológico</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
             <td>
-              <input
-                type="checkbox"
-                checked={padecimientosData[i]?.si || false}
-                onChange={e => handlePadecimientoChange(i, 'si', e.target.checked)}
-                disabled={bloqueado}
-              />
+              <input type="date" value={detalles.fecha_inicio || ""}
+                onChange={e => handleDetallePatologiaChange(patologia, "fecha_inicio", e.target.value)}
+                disabled={bloqueado || bloquearFecha} />
             </td>
             <td>
-              <input
-                type="checkbox"
-                checked={padecimientosData[i]?.no || false}
-                onChange={e => handlePadecimientoChange(i, 'no', e.target.checked)}
-                disabled={bloqueado}
-              />
+              <label>
+                <input 
+                  type="checkbox" 
+                  checked={detalles.continuaSi || false}
+                  onChange={e => {
+                    // Si se selecciona "Sí", desmarcar "No"
+                    if (e.target.checked) {
+                      handleDetallePatologiaChange(patologia, "continuaSi", true);
+                      handleDetallePatologiaChange(patologia, "continuaNo", false);
+                    } else {
+                      handleDetallePatologiaChange(patologia, "continuaSi", false);
+                    }
+                  }} 
+                  disabled={bloqueado} /> Sí
+              </label>
+              <label style={{ marginLeft: 10 }}>
+                <input 
+                  type="checkbox" 
+                  checked={detalles.continuaNo || false}
+                  onChange={e => {
+                    // Si se selecciona "No", desmarcar "Sí"
+                    if (e.target.checked) {
+                      handleDetallePatologiaChange(patologia, "continuaNo", true);
+                      handleDetallePatologiaChange(patologia, "continuaSi", false);
+                    } else {
+                      handleDetallePatologiaChange(patologia, "continuaNo", false);
+                    }
+                  }} 
+                  disabled={bloqueado} /> No
+              </label>
             </td>
             <td>
-              <input
-                type="date"
-                value={padecimientosData[i]?.fecha_inicio || ''}
-                onChange={e => handlePadecimientoChange(i, 'fecha_inicio', e.target.value)}
-                disabled={bloqueado}
-              />
+              <input type="date" value={detalles.resueltoFecha || ""}
+                onChange={e => handleDetallePatologiaChange(patologia, "resueltoFecha", e.target.value)}
+                disabled={bloqueado || bloquearFechaResuelto} />
             </td>
             <td>
-              <input
-                type="checkbox"
-                checked={padecimientosData[i]?.continua_si || false}
-                onChange={e => handlePadecimientoChange(i, 'continua_si', e.target.checked)}
-                disabled={bloqueado}
-              />
+              <input type="text" value={detalles.manejoFarmacologico || ""}
+                onChange={e => handleDetallePatologiaChange(patologia, "manejoFarmacologico", e.target.value)}
+                placeholder="Medicamento" disabled={bloqueado} />
             </td>
           </tr>
-        ))}
-      </tbody>
-    </table>
-  
- <div style={{ marginTop: '1rem', display: 'flex', gap: '10px' }}>
-        {!bloqueado && (
-          <>
-            <button type="submit" onClick={handleSubmit}>Guardar</button>
-            <button type="button" onClick={bloquearCampos}>Bloquear</button>
-          </>
-        )}
-        {bloqueado && (
-          <button type="button" onClick={desbloquearCampos}>Desbloquear</button>
-        )}
-      </div>
+        </tbody>
+      </table>
+    </div>
+  );
+})}
+
+      <h3>Padecimiento Actual</h3>
+      <table border="1" style={{ width: '100%' }}>
+        <thead>
+          <tr>
+            <th>Padecimiento</th>
+            <th>Sí</th>
+            <th>No</th>
+            <th>Fecha de Inicio</th>
+            <th>Continua Sí</th>
+          </tr>
+        </thead>  
+       <tbody>
+          {padecimientosItems.map((pad, i) => {
+            const fila = padecimientosData[i] || {};
+            const filaBloqueada = fila.no; // 🔹 Si selecciona "No" bloquear fila
+            return (
+              <tr key={i}>
+                <td>{pad}</td>
+                <td>
+                  <input
+                    type="checkbox"
+                    checked={fila.si || false}
+                    onChange={e => handlePadecimientoChange(i, 'si', e.target.checked)}
+                    disabled={bloqueado}
+                  />
+                </td>
+                <td>
+                  <input
+                    type="checkbox"
+                    checked={fila.no || false}
+                    onChange={e => handlePadecimientoChange(i, 'no', e.target.checked)}
+                    disabled={bloqueado}
+                  />
+                </td>
+                <td>
+                  <input
+                    type="date"
+                    value={fila.fecha_inicio || ''}
+                    onChange={e => handlePadecimientoChange(i, 'fecha_inicio', e.target.value)}
+                    disabled={bloqueado || filaBloqueada}
+                  />
+                </td>
+                <td>
+                  <input
+                    type="checkbox"
+                    checked={fila.continua_si || false}
+                    onChange={e => handlePadecimientoChange(i, 'continua_si', e.target.checked)}
+                    disabled={bloqueado || filaBloqueada}
+                  />
+                </td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
     </div>
   );
 };

@@ -1,19 +1,22 @@
 import React, { useState } from 'react';
-import './css/Admin.css'; // Asegúrate de tener los estilos en este archivo
+import Swal from 'sweetalert2';
+import './css/Admin.css';
 
 const CrearAdministrador = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [mensaje, setMensaje] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
+      const token = localStorage.getItem('token');
+
       const response = await fetch('https://api.weareinfinite.mx/admin/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ email, password }),
       });
@@ -21,15 +24,40 @@ const CrearAdministrador = () => {
       const data = await response.json();
 
       if (response.ok) {
-        setMensaje('Administrador creado con éxito ✅');
+        Swal.fire({
+          icon: 'success',
+          title: '¡Administrador creado!',
+          timer: 1500,
+          showConfirmButton: false,
+        }).then(() => {
+          window.location.href = '/Index';
+        });
+
         setEmail('');
         setPassword('');
       } else {
-        setMensaje(data.mensaje || 'Error al crear administrador ❌');
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: data.mensaje || 'Error al crear administrador ❌',
+          timer: 1500,
+          showConfirmButton: false,
+        }).then(() => {
+          window.location.href = '/Index';
+        });
       }
     } catch (error) {
       console.error('Error:', error);
-      setMensaje('Error de red ❌');
+
+      Swal.fire({
+        icon: 'error',
+        title: 'Error de red',
+        text: 'No se pudo conectar con el servidor ❌',
+        timer: 1500,
+        showConfirmButton: false,
+      }).then(() => {
+        window.location.href = '/Index';
+      });
     }
   };
 
@@ -53,7 +81,6 @@ const CrearAdministrador = () => {
         />
         <button type="submit">Crear</button>
       </form>
-      {mensaje && <p style={{ color: '#fff', marginTop: '15px', textAlign: 'center' }}>{mensaje}</p>}
     </div>
   );
 };

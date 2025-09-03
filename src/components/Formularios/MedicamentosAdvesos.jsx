@@ -12,7 +12,7 @@ const EventosAdversos = () => {
     iniciales: '',
     num_aleatorizacion: '',
     presento_ea: null,
-    evento: '',
+    evento: '', // Dato "evento" que ahora va antes de la fecha_inicio
     clasificado_como_ea: '',
     fecha_inicio: '',
     fecha_termino: '',
@@ -25,7 +25,35 @@ const EventosAdversos = () => {
     desenlace: '',
     nota_evolucion: ''
   });
+const intensidadMapping = {
+    1: 'Leve',
+    2: 'Moderada',
+    3: 'Grave',
+  };
 
+  const causalidadMapping = {
+    1: 'Relacionada',
+    2: 'No relacionada',
+    3: 'Probablemente',
+  };
+
+  const relacionMedicamentoMapping = {
+    1: 'Alta',
+    2: 'Media',
+    3: 'Baja',
+  };
+
+  const accionesTomadasMapping = {
+    1: 'Suspensión',
+    2: 'Reducción',
+    3: 'Sin cambios',
+  };
+
+  const desenlaceMapping = {
+    1: 'Recuperado',
+    2: 'Persistente',
+    3: 'Desconocido',
+  };
   const formatDateForInput = (dateStr) => {
     if (!dateStr) return '';
     const date = new Date(dateStr);
@@ -96,7 +124,11 @@ const EventosAdversos = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const payload = { ...formData, idPaciente };
+    const payload = { 
+      ...formData, 
+      idPaciente,
+      evento: formData.evento // Asegurando que el dato "evento" esté al principio del objeto
+    };
     try {
       const res = await fetch(`https://api.weareinfinite.mx/form/eventos_adversos`, {
         method: 'POST',
@@ -191,12 +223,17 @@ const EventosAdversos = () => {
               <td><input type="text" name="num_aleatorizacion" value={formData.num_aleatorizacion} disabled={bloqueado} onChange={handleInputChange} /></td>
             </tr>
             <tr>
+              <td><label>Evento:</label></td>
+              <td><input type="text" name="evento" value={formData.evento} disabled={bloqueado} onChange={handleInputChange} /></td>
+            </tr>
+            <tr>
               <td colSpan={2}>
                 <label>¿El paciente presentó algún EA durante la visita?</label><br />
                 <label><input type="radio" name="ea" value="si" checked={formData.presento_ea === true} disabled={bloqueado} onChange={() => handlePresentoEAChange(true)} /> Sí</label>
                 <label><input type="radio" name="ea" value="no" checked={formData.presento_ea === false} disabled={bloqueado} onChange={() => handlePresentoEAChange(false)} /> No</label>
               </td>
             </tr>
+
 
             {formData.presento_ea && (
               <>
@@ -246,39 +283,45 @@ const EventosAdversos = () => {
       </form>
 
       {/* Tabla de eventos agregados */}
- {eventos.length > 0 && (
-      <div className="tabla-eventos-container">
-        <h3>Eventos adversos registrados:</h3>
-        <table className="eventos-table">
-          <thead>
-            <tr>
-              <th>Fecha inicio</th>
-              <th>Fecha término</th>
-              <th>Hora inicio</th>
-              <th>Hora término</th>
-              <th>Intensidad</th>
-              <th>Causalidad</th>
-              <th>Desenlace</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {eventos.map((ev) => (
-              <tr key={ev.id}>
-                <td>{ev.fecha_inicio}</td>
-                <td>{ev.fecha_termino}</td>
-                <td>{ev.hora_inicio}</td>
-                <td>{ev.hora_termino}</td>
-                <td>{ev.intensidad}</td>
-                <td>{ev.causalidad}</td>
-                <td>{ev.desenlace}</td>
-                <td>
-                  <button
-                    type="button"
-                    onClick={() => handleEliminar(ev.id)}
-                  >
-                    Eliminar
-                  </button>
+  {/* Tabla de eventos agregados */}
+      {eventos.length > 0 && (
+        <div className="tabla-eventos-container">
+          <h3>Eventos adversos registrados:</h3>
+          <table className="eventos-table">
+            <thead>
+              <tr>
+                <th>Evento</th>
+                <th>Fecha inicio</th>
+                <th>Fecha término</th>
+                <th>Hora inicio</th>
+                <th>Hora término</th>
+                <th>Intensidad</th>
+                <th>Causalidad</th>
+                <th>Relación medicamento</th>
+                <th>Acciones tomadas</th>
+                <th>Desenlace</th>
+                <th>Nota de Evolucion</th>
+                <th>Eliminar</th>
+              </tr>
+            </thead>
+            <tbody>
+              {eventos.map((ev) => (
+                <tr key={ev.id}>
+                  <td>{ev.evento}</td>
+                  <td>{ev.fecha_inicio}</td>
+                  <td>{ev.fecha_termino}</td>
+                  <td>{ev.hora_inicio}</td>
+                  <td>{ev.hora_termino}</td>
+                  <td>{intensidadMapping[ev.intensidad] || ev.intensidad}</td>
+                  <td>{causalidadMapping[ev.causalidad] || ev.causalidad}</td>
+                  <td>{relacionMedicamentoMapping[ev.relacion_medicamento] || ev.relacion_medicamento}</td>
+                  <td>{accionesTomadasMapping[ev.acciones_tomadas] || ev.acciones_tomadas}</td>
+                  <td>{desenlaceMapping[ev.desenlace] || ev.desenlace}</td>
+                  <td>{ev.nota_evolucion}</td>
+                  <td>
+                    <button type="button" disabled={bloqueado} onClick={() => handleEliminar(ev.id)}>
+                      Eliminar
+                    </button>
                 </td>
               </tr>
             ))}

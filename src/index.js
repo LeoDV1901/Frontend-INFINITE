@@ -27,6 +27,20 @@ import Protocolo from "./components/Protocolo";
 import ReportePaciente from "./components/Reporte";
 import CrearAdministrador from "./components/CrearAdministrador";
 import PrivateRoute from "./PrivateRoute";
+import CriteriosEliminacion from "./components/Formularios/Criterios_eliminacion";
+import HistoriaClinicaGraphs from "./components/Graficas_HistoriaClinica";
+import ConsentimientoForm from "./components/Exel_Concentimiento";
+import CriteriosInclusionForm from "./components/Exel_Inclusion";
+import CriteriosExclusionForm from "./components/Exel_Exclusion";
+import CriteriosEliminacionForm from "./components/Exel_Eliminacion";
+import HistoriaClinicaForm from "./components/Exel_HClinica";
+import SignosForm from "./components/Exel_Signos";
+import MedicamentosConconmitantesForm from "./components/Exel_Concomitantes";
+import EventosAdversosForm from "./components/Exel_Adversos";
+import RutasExels from "./components/Control_Exel";
+import RutasGraficas from "./components/Control_Graficas";
+import MedicamentosGraph from "./components/Graficas_MConcomitantes";
+import EventosAdversosGraph from "./components/Graficas_adversos";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <BrowserRouter>
@@ -56,7 +70,23 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <Route path="/Protocolo" element={<Protocolo />} />
     <Route path="/ReportePaciente/:idPaciente" element={<ReportePaciente />} />
     <Route path="/CreateAdmin" element={<CrearAdministrador />} />
+    <Route path="/CriteriosEliminacion/:idPaciente" element={<CriteriosEliminacion />} />
 
+    <Route path="/GraficasHistoriaClinica" element={<HistoriaClinicaGraphs />} />
+    <Route path="/ExelConcentimiento" element={<ConsentimientoForm />} />
+    <Route path="/Exel_Inclusion" element={<CriteriosInclusionForm />} />
+    <Route path="/Exel_Exclusion" element={<CriteriosExclusionForm />} />
+    <Route path="/Exel_Eliminacion" element={<CriteriosEliminacionForm />} />
+    <Route path="/Exel_HClinica" element={<HistoriaClinicaForm />} />
+    <Route path="/Exel_Signos" element={<SignosForm />} />
+    <Route path="/Exel_Concomitantes" element={<MedicamentosConconmitantesForm />} />
+    <Route path="/Exel_Adversos" element={<EventosAdversosForm />} />
+    <Route path="/Routes_view" element={<RutasExels/>} />
+    <Route path="/Routes_graficas" element={<RutasGraficas/>} />
+    <Route path="/Graficas_Concomitantes" element={<MedicamentosGraph/>} />
+    <Route path="/Graficas_Eventos" element={<EventosAdversosGraph/>} />
+
+    
     </Routes>
   </BrowserRouter>
 )

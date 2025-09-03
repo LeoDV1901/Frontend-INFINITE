@@ -166,15 +166,25 @@ const VistaPacientes = () => {
               <option value="15">15</option>
             </select>
 
-            <Link to="/Graficas">
+            <Link to="/Routes_graficas">
               <button className="boton-nuevo">Generar Gráficas</button>
+            </Link>
+             <Link to="/Routes_view">
+              <button className="boton-nuevo">Generar Exels</button>
             </Link>
             <Link to="/RegistroPacientes">
               <button className="boton-nuevo">Añadir Nuevo Sujeto</button>
             </Link>
             <Link to="/Protocolo">
-              <button className="boton-nuevo">Nuevo Protocolo</button>
-            </Link>
+  <button className="boton-nuevo">Nuevo Protocolo</button>
+</Link>
+
+{localStorage.getItem('correo') === 'admin@infinite.com.mx' && (
+  <Link to="/CreateAdmin">
+    <button className="boton-nuevo">Crear Acceso</button>
+  </Link>
+)}
+
           </div>
         </div>
       </div>

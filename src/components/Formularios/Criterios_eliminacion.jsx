@@ -26,7 +26,7 @@ const preguntas = [
   { id: 'p20', texto: '20. Pacientes con antecedentes de abuso de alcohol o drogas' },
 ];
 
-const EliminacionEvolucionCriteriosExclusion = () => {
+const CriteriosEliminacion = () => {
   const { idPaciente } = useParams();
   const navigate = useNavigate();
 
@@ -51,7 +51,7 @@ const EliminacionEvolucionCriteriosExclusion = () => {
 
   const fetchCriteriosExclusion = async () => {
     try {
-      const res = await fetch(`https://api.weareinfinite.mx/form/criterios_exclusion/${idPaciente}`);
+      const res = await fetch(`https://api.weareinfinite.mx/form/criterios_eliminacion/paciente/${idPaciente}`);
       const data = await res.json();
       const lista = Array.isArray(data) ? data : data.result || [];
 
@@ -64,8 +64,7 @@ const EliminacionEvolucionCriteriosExclusion = () => {
         setComentarios(Object.fromEntries(preguntas.map(p => [p.id, ultimo[`comentario${p.id.slice(1)}`]])));
       }
     } catch (error) {
-      Swal.fire('Error', 'Error al obtener registros.', 'error');
-      navigate(`/Cronograma/${idPaciente}`);
+      Swal.fire('No se han ingresado Datos');
     }
   };
 
@@ -104,8 +103,8 @@ const EliminacionEvolucionCriteriosExclusion = () => {
 
     try {
       const url = editId
-        ? `https://api.weareinfinite.mx/form/criterios_exclusion/${editId}`
-        : `https://api.weareinfinite.mx/form/criterios_exclusion`;
+        ? `https://api.weareinfinite.mx/form/criterios_eliminacion/update/${editId}`
+        : `https://api.weareinfinite.mx/form/criterios_eliminacion`;
 
       const method = editId ? 'PUT' : 'POST';
 
@@ -201,14 +200,16 @@ const EliminacionEvolucionCriteriosExclusion = () => {
                   ))}
                 </div>
                 {esSi && (
-                  <div className="comentario">
-                    <textarea
-                      value={comentarios[pregunta.id] || ''}
-                      onChange={(e) => handleComentarioChange(pregunta.id, e.target.value)}
-                      placeholder="Comentario sobre esta respuesta..."
-                      disabled={bloqueado}
-                    />
-                  </div>
+                 <div className="comentario">
+  <textarea
+    value={comentarios[pregunta.id] || ''}
+    onChange={(e) => handleComentarioChange(pregunta.id, e.target.value)}
+    placeholder="Comentario sobre esta respuesta..."
+    disabled={bloqueado}
+    style={{ color: 'black' }} // ✅ Color del texto
+  />
+</div>
+
                 )}
               </div>
             );
@@ -234,4 +235,4 @@ const EliminacionEvolucionCriteriosExclusion = () => {
   );
 };
 
-export default EliminacionEvolucionCriteriosExclusion;
+export default CriteriosEliminacion;

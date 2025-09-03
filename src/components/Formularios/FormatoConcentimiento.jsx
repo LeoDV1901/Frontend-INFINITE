@@ -190,61 +190,68 @@ const ConcentimientoInformado = () => {
         <h2 style={{ color: '#ff5733' }}>Consentimiento Informado</h2>
 
         <form onSubmit={handleSubmit}>
-          {preguntas.map(pregunta => {
-            const respuesta = respuestas[pregunta.id];
-            const esNo = respuesta === 'No';
+    {preguntas.map(pregunta => {
+  const respuesta = respuestas[pregunta.id];
 
-            return (
-              <div className="pregunta" key={pregunta.id}>
-                <span dangerouslySetInnerHTML={{ __html: pregunta.texto }} />
+  return (
+    <div className="pregunta" key={pregunta.id}>
+      <span dangerouslySetInnerHTML={{ __html: pregunta.texto }} />
 
-                {['p1', 'p3', 'p4'].includes(pregunta.id) && (
-                  <div className="radio-group">
-                    {['Sí', 'No'].map(op => (
-                      <label className="radio-option" key={op}>
-                        <input
-                          type="radio"
-                          name={pregunta.id}
-                          value={op}
-                          checked={respuesta === op}
-                          onChange={() => handleChange(pregunta.id, op)}
-                          required
-                          disabled={bloqueado}
-                        />
-                        <span className="custom-radio">{op}</span>
-                      </label>
-                    ))}
-                  </div>
-                )}
+      {['p1', 'p3', 'p4'].includes(pregunta.id) && (
+        <div className="radio-group">
+          {['Sí', 'No'].map(op => (
+            <label className="radio-option" key={op}>
+              <input
+                type="radio"
+                name={pregunta.id}
+                value={op}
+                checked={respuesta === op}
+                onChange={() => handleChange(pregunta.id, op)}
+                required
+                disabled={bloqueado}
+              />
+              <span className="custom-radio">{op}</span>
+            </label>
+          ))}
+        </div>
+      )}
 
-                {pregunta.id === 'p2' && (
-                  <>
-                    <input
-                      type="time"
-                      className={`comentario-input ${!horaValida ? 'error' : ''}`}
-                      value={comentarios[pregunta.id] || ''}
-                      onChange={handleHoraChange}
-                      disabled={bloqueado}
-                    />
-                    {!horaValida && (
-                      <span style={{ color: 'red', fontSize: '12px' }}>{horaError}</span>
-                    )}
-                  </>
-                )}
+      {pregunta.id === 'p2' && (
+        <>
+          <input
+            type="time"
+            className={`comentario-input ${!horaValida ? 'error' : ''}`}
+            value={comentarios[pregunta.id] || ''}
+            onChange={handleHoraChange}
+            disabled={bloqueado}
+          />
+          {!horaValida && (
+            <span style={{ color: 'red', fontSize: '12px' }}>{horaError}</span>
+          )}
+        </>
+      )}
 
-                {esNo && (
-                  <input
-                    type="text"
-                    className="comentario-input"
-                    placeholder="Ingrese una observación..."
-                    value={comentarios[pregunta.id] || ''}
-                    onChange={(e) => handleComentarioChange(pregunta.id, e.target.value)}
-                    disabled={bloqueado}
-                  />
-                )}
-              </div>
-            );
-          })}
+      {/* Lógica de visibilidad de recuadro de comentario ajustada */}
+      {(
+        // Mostrar comentario si:
+        // → es la p3 y respuesta es "Sí"
+        (pregunta.id === 'p3' && respuesta === 'Sí') ||
+        // → para otras preguntas (p1 y p4), si respuesta es "No"
+        (pregunta.id !== 'p3' && respuesta === 'No')
+      ) && (
+        <input
+          type="text"
+          className="comentario-input"
+          placeholder="Ingrese una observación..."
+          value={comentarios[pregunta.id] || ''}
+          onChange={(e) => handleComentarioChange(pregunta.id, e.target.value)}
+          disabled={bloqueado}
+        />
+      )}
+    </div>
+  );
+})}
+
 
           <div className="actions">
             <button type="submit" disabled={bloqueado}>

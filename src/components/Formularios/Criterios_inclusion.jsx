@@ -4,7 +4,7 @@ import Swal from 'sweetalert2';
 import '../css/Formulario_Pacientes.css';
 
 const preguntas = [
-  { id: 'p1', texto: '1. Firma de la carta de Consentimiento Informado ff910d' },
+  { id: 'p1', texto: '1. Firma de la carta de Consentimiento Informado' },
   { id: 'p2', texto: '2. Dolor lumbar con evolución de < 6 semanas' },
   { id: 'p3', texto: '3. Diagnóstico de Lumbalgia Mecánica aguda o subaguda SIN radiculopatía' },
   { id: 'p4', texto: '4. Paciente de cualquier género, mayor de 18 años y menor de 65 años' },
